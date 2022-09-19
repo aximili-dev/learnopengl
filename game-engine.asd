@@ -5,6 +5,7 @@
   :license "GPLv3"
   :depends-on (:cl-opengl
                :cl-glut
-	       :cl-glu)
+	       :cl-glu
+	       :cl-glfw3)
   :components ((:file "package")
 	       (:file "opengl" :depends-on ("package"))))

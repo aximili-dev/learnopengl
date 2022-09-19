@@ -1,13 +1,5 @@
 (in-package :dev.litvak.game-engine)
 
-(defclass gl-window (glut:window)
-  ()
-  (:default-initargs
-   :width 800
-   :height 600
-   :title "opengl.lisp"
-   :mode '(:double :rgb :depth)))
-
 (defun make-gl-array (array type)
   (let* ((n-elements (length array))
 	 (arr (gl:alloc-gl-array type n-elements)))
@@ -16,42 +8,96 @@
     arr))
 
 (defparameter *vertices*
-  #( 0.5  0.5  0.0
-     0.5 -0.5  0.0
-    -0.5 -0.5  0.0
-    -0.5  0.5  0.0))
+  ;; Positions      Colors         Tex coords
+  #(-0.5 -0.5 -0.5  0.0  0.0
+     0.5 -0.5 -0.5  1.0  0.0
+     0.5  0.5 -0.5  1.0  1.0
+     0.5  0.5 -0.5  1.0  1.0
+    -0.5  0.5 -0.5  0.0  1.0
+    -0.5 -0.5 -0.5  0.0  0.0
+    -0.5 -0.5  0.5  0.0  0.0
+     0.5 -0.5  0.5  1.0  0.0
+     0.5  0.5  0.5  1.0  1.0
+     0.5  0.5  0.5  1.0  1.0
+    -0.5  0.5  0.5  0.0  1.0
+    -0.5 -0.5  0.5  0.0  0.0
+    -0.5  0.5  0.5  1.0  0.0
+    -0.5  0.5 -0.5  1.0  1.0
+    -0.5 -0.5 -0.5  0.0  1.0
+    -0.5 -0.5 -0.5  0.0  1.0
+    -0.5 -0.5  0.5  0.0  0.0
+    -0.5  0.5  0.5  1.0  0.0
+     0.5  0.5  0.5  1.0  0.0
+     0.5  0.5 -0.5  1.0  1.0
+     0.5 -0.5 -0.5  0.0  1.0
+     0.5 -0.5 -0.5  0.0  1.0
+     0.5 -0.5  0.5  0.0  0.0
+     0.5  0.5  0.5  1.0  0.0
+    -0.5 -0.5 -0.5  0.0  1.0
+     0.5 -0.5 -0.5  1.0  1.0
+     0.5 -0.5  0.5  1.0  0.0
+     0.5 -0.5  0.5  1.0  0.0
+    -0.5 -0.5  0.5  0.0  0.0
+    -0.5 -0.5 -0.5  0.0  1.0
+    -0.5  0.5 -0.5  0.0  1.0
+     0.5  0.5 -0.5  1.0  1.0
+     0.5  0.5  0.5  1.0  0.0
+     0.5  0.5  0.5  1.0  0.0
+    -0.5  0.5  0.5  0.0  0.0
+    -0.5  0.5 -0.5  0.0  1.0))
 
 (defparameter *indices*
-  #(0 1 3
-    1 2 3))
+  #( 0  1  2  3  4  5
+     6  7  8  9 10 11
+    12 13 14 15 16 17
+    18 19 20 21 22 23
+    24 25 26 27 28 29
+    30 31 32 33 34 35))
 
-(defvar *vertex-shader-source*
+(defparameter *instance-positions*
+  (list (vec  0    0    0)
+	(vec  2    5   -15)
+	(vec -1.5 -2.2 -2.5)
+	(vec -3.8 -2.0 -12.3)
+	(vec  2.4 -0.4 -3.5)
+	(vec -1.7  3.0 -7.5)
+	(vec  1.3 -2.0 -2.5)
+	(vec  1.5  2.0 -2.5)
+	(vec  1.5  0.2 -1.5)
+	(vec -1.3  1.0 -1.5)))
+
+(defparameter *vertex-shader-source*
   (with-output-to-string (s)
     (format s "#version 330 core~%")
     (format s "layout (location = 0) in vec3 aPos;~%")
+    (format s "layout (location = 1) in vec2 aTexCoord;~%")
+    (format s "out vec2 texCoord;~%")
+    (format s "uniform mat4 view;~%")
+    (format s "uniform mat4 model;~%")
+    (format s "uniform mat4 projection;~%")
     (format s "void main ()~%")
     (format s "{~%")
-    (format s "  gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);~%")
+    (format s "  gl_Position = projection * view * model * vec4(aPos, 1.0);~%")
+    (format s "  texCoord = vec2(aTexCoord.x, aTexCoord.y);~%")
     (format s "}~c" #\Nul)))
 
-(defvar *vertex-shader*)
-
-(defvar *fragment-shader-source*
+(defparameter *fragment-shader-source*
   (with-output-to-string (s)
     (format s "#version 330 core~%")
     (format s "out vec4 FragColor;~%")
+    (format s "in vec2 texCoord;~%")
+    (format s "uniform sampler2D texture1;~%")
+    (format s "uniform sampler2D texture2;~%")
     (format s "void main()~%")
     (format s "{~%")
-    (format s "  FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);~%")
+    (format s "  FragColor = mix(texture(texture1, texCoord), texture(texture2, texCoord), 0.2);~%")
     (format s "}~c" #\Nul)))
 
-(defvar *fragment-shader*)
+(defparameter *shader-program* nil)
 
-(defvar *shader-program*)
-
-(defvar *vbo*)
-(defvar *vao*)
-(defvar *ebo*)
+(defparameter *vbo* nil)
+(defparameter *vao* nil)
+(defparameter *ebo* nil)
 
 (defun assert-compile (shader)
   (unless (gl:get-shader shader :compile-status)
@@ -65,43 +111,84 @@
 		    (function ,get-iv)
 		    ,status-key
 		    (,get-info-log ,object)))))
+
+(defun create-shader (source type)
+  (let ((shader (gl:create-shader type)))
+    (gl:shader-source shader (list source))
+    (gl:compile-shader shader)
+    (gl-assert shader
+	       gl:get-shader :compile-status
+	       gl:get-shader-info-log)
+    shader))
+
+(defun create-shader-program (vertex-source fragment-source &optional (destroy-shaders t))
+  (let ((vs (create-shader vertex-source :vertex-shader))
+	(fs (create-shader fragment-source :fragment-shader))
+	(program (gl:create-program)))
+    (gl:attach-shader program vs)
+    (gl:attach-shader program fs)
+    (gl:link-program program)
+    (gl-assert program
+	       gl:get-program :link-status
+	       gl:get-program-info-log)
+    (when destroy-shaders
+      (format t "DEBUG: Deleting shaders after creating program~%")
+      (gl:delete-shader vs)
+      (gl:delete-shader fs))
+    program))
+
+(defun shader-set-uniform (program-id location &rest vector)
+  "Sets a uniform in a shader program. Changes the active shader."
+  (let ((location (gl:get-uniform-location program-id location))
+	(first (car vector)))
+    (if (eql location -1)
+	(error "Couldn't find location ~a in program ~d" location program-id))
+    (let ((func (cond ((typep first 'integer) #'gl:uniformi)
+		      ((typep first 'real)    #'gl:uniformf)
+		      ((typep first 'boolean) #'gl:uniformi)
+		      ((typep first 'array)   #'gl:uniform-matrix-4fv)
+		      (t (error "Unrecognized type in vector")))))
+      (gl:use-program program-id)
+      (apply func location vector))))
    
-(defmethod glut:display-window :before ((window gl-window))
-  (gl:clear-color 0 0 0 0)
-  (gl:matrix-mode :projection)
-  (gl:load-identity)
-  (gl:ortho 0 1 0 1 -1 1)
-  (gl:shade-model :flat)
 
-  ;; Compile vertex shader
-  (setf *vertex-shader* (gl:create-shader :vertex-shader))
-  (gl:shader-source *vertex-shader* (list *vertex-shader-source*))
-  (gl:compile-shader *vertex-shader*)
-  (gl-assert *vertex-shader*
-	     gl:get-shader :compile-status
-	     gl:get-shader-info-log)
+(defparameter *texture* nil)
+(defparameter *face-texture* nil)
 
-  ;; Compile fragment shader
-  (setf *fragment-shader* (gl:create-shader :fragment-shader))
-  (gl:shader-source *fragment-shader* (list *fragment-shader-source*))
-  (gl:compile-shader *fragment-shader*)
-  (gl-assert *fragment-shader*
-	     gl:get-shader :compile-status
-	     gl:get-shader-info-log)
+(defun load-png-texture (path &rest pngload-params)
+  (let ((png (apply #'pngload:load-file path :flatten t pngload-params))
+	(texture-id (car (gl:gen-textures 1))))
+    (gl:bind-texture :texture-2d texture-id)
+
+    (gl:tex-parameter :texture-2d :texture-wrap-s :repeat)
+    (gl:tex-parameter :texture-2d :texture-wrap-t :repeat)
+    (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear)
+    (gl:tex-parameter :texture-2d :texture-mag-filter :linear)
+
+    (gl:tex-image-2d :texture-2d 0 :rgba
+		     (pngload:width png)
+		     (pngload:height png)
+		     0 :rgba :unsigned-byte
+		     (pngload:data png))
+    (gl:generate-mipmap :texture-2d)
+    texture-id))
+
+(defun radians (degrees)
+  (/ (* degrees pi) 180))
+
+(defun setup (window)
+  ;; Load texture
+  (setf *texture* (load-png-texture #P"./container.png"))
+  (setf *face-texture* (load-png-texture #P"./awesomeface.png" :flip-y t))
 
   ;;Set shader program
-  (setf *shader-program* (gl:create-program))
-  (gl:attach-shader *shader-program* *vertex-shader*)
-  (gl:attach-shader *shader-program* *fragment-shader*)
-  (gl:link-program *shader-program*)
-  (gl-assert *shader-program*
-	     gl:get-program :link-status
-	     gl:get-program-info-log)
+  (setf *shader-program*
+	(create-shader-program *vertex-shader-source*
+			       *fragment-shader-source*))
 
-  ;; Clean up shaders after linking them in the program
-  (gl:delete-shader *vertex-shader*)
-  (gl:delete-shader *fragment-shader*)
-
+  (shader-set-uniform *shader-program* "texture1" 0)
+  (shader-set-uniform *shader-program* "texture2" 1)
+  
   ;; Get VBO buffer
   (setf *vao* (car (gl:gen-vertex-arrays 1)))
   (setf *vbo* (car (gl:gen-buffers 1)))
@@ -127,47 +214,163 @@
       (gl:free-gl-array arr))
 
   ;; Set vertex attribute pointers
-  (gl:vertex-attrib-pointer 0 3 :float :false (* 3 4) 0)
+  (gl:vertex-attrib-pointer 0 3 :float :false (* 5 4) 0)
   (gl:enable-vertex-attrib-array 0)
+
+  (gl:vertex-attrib-pointer 1 2 :float :false (* 5 4) (* 3 4))
+  (gl:enable-vertex-attrib-array 1)
 
   (gl:bind-buffer :array-buffer 0)
   (gl:bind-vertex-array 0))
 
-(defmethod glut:display ((window gl-window))
-  (gl:clear-color 0.2 0.3 0.3 1.0)
-  (gl:clear :color-buffer)
-  
-  ;; Use our shader program
-  (gl:use-program *shader-program*)
-  (gl:bind-vertex-array *vao*)
-  (gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count 6)
-  (gl:bind-vertex-array 0)
-
-  (glut:swap-buffers))
-
-(defmethod glut:reshape ((w gl-window) width height)
-  (gl:viewport 0 0 width height))
-
-(defmethod glut:keyboard ((w gl-window) key x y)
-  (format t "Got key: ~@c (~d ~d)~%" key x y)
-  (when (eql key #\Esc)
-    (glut:destroy-current-window)))
-
-(defmethod glut:close ((w gl-window))
+(defun cleanup ()
+  (format t "DEBUG: Cleaning up~%")
   (gl:delete-vertex-arrays (list *vao*))
   (gl:delete-buffers (list *vbo*))
   (gl:delete-buffers (list *ebo*))
   (gl:delete-program *shader-program*))
 
-(defun show-window ()
-  (let ((w (make-instance 'gl-window)))
-    ;(unwind-protect
-	 (glut:display-window w)))
-      ;(when (not (glut::destroyed w))
-	;(setf (glut::destroyed w) t)
-	;(glut:destroy-window (glut:id w))))))
+(defun resize (window width height)
+  (gl:viewport 0 0 width height))
+
+(glfw:def-window-size-callback window-size-callback (window width height)
+  (resize window width height))
+
+(defparameter *camera-pos*   (vec 0 0 3))
+(defparameter *camera-front* (vec 0 0 -1))
+(defparameter *camera-up*    (vec 0 1 0))
+
+(defparameter *camera-speed* 1500.0)
+
+(defparameter *delta-time* 0.0)
+(defparameter *last-frame* 0.0)
+
+(defparameter *sensitivity* 0.1)
+(defparameter *last-x* 400)
+(defparameter *last-y* 300)
+
+(defparameter *yaw* 0)
+(defparameter *pitch* 0)
+
+(defun process-input (window key scancode action mod-keys)
+  (let ((*camera-speed* (* *camera-speed* *delta-time*)))
+    (when (eql action :press)
+      (case key
+	(:escape (glfw:set-window-should-close window))
+	(:w (nv+ *camera-pos* (v* *camera-speed* *camera-front*)))
+	(:s (nv- *camera-pos* (v* *camera-speed* *camera-front*)))
+	(:a (nv- *camera-pos* (v* (vunit (vc *camera-front* *camera-up*))
+				  *camera-speed*)))
+	(:d (nv+ *camera-pos* (v* (vunit (vc *camera-front* *camera-up*))
+				  *camera-speed*)))))))
+
+(glfw:def-key-callback process-input (window key scancode action mod-keys)
+  (process-input window key scancode action mod-keys))
+
+(defun clamp (value floor ceiling)
+  (min (max value floor) ceiling))
+
+(defun process-mouse (window x-pos y-pos)
+  (let ((x-offset (* (- x-pos *last-x*) *sensitivity*))
+	(y-offset (* (- *last-y* y-pos) *sensitivity*)))
+    (setf *last-x* x-pos)
+    (setf *last-y* y-pos)
+
+    (incf *yaw* x-offset)
+    (setf *pitch* (clamp (+ *pitch* y-offset) -89 89)))
+
+  (let* ((yaw (radians *yaw*))
+	 (pitch (radians *pitch*))
+	 (x (cos (* yaw pitch)))
+	 (y (sin pitch))
+	 (z (sin (* yaw pitch)))
+	 (direction (vec x y z)))
+    (setf *camera-front* (vunit direction))))
+	 
+
+(glfw:def-cursor-pos-callback process-cursor-pos (window x-pos y-pos)
+  (process-mouse window x-pos y-pos))
+
+(defun render ()
+  (gl:clear-color 0.2 0.3 0.3 1.0)
+  (gl:clear :color-buffer :depth-buffer)
+  
+  (gl:active-texture :texture0)
+  (gl:bind-texture :texture-2d *texture*)
+
+  (gl:active-texture :texture1)
+  (gl:bind-texture :texture-2d *face-texture*)
+
+  (gl:use-program *shader-program*)
+
+  (dotimes (i (length *instance-positions*))
+    (let ((model (meye 4))
+	  (view (mlookat *camera-pos* *camera-front* *camera-up*))
+	  (projection (mperspective (radians 45) (/ 800 600) 0.1 1000)))
+      (nmtranslate model (nth i *instance-positions*))
+      (nmrotate model (vec (/ 0.5 (+ 0.1 i)) (* i 0.1) 0) (radians (+ 10 (* 10 i (glfw:get-time)))))
+
+      (shader-set-uniform *shader-program* "view" (marr view))
+      (shader-set-uniform *shader-program* "model" (marr model))
+      (shader-set-uniform *shader-program* "projection" (marr projection)))
+  
+    (gl:bind-vertex-array *vao*)
+    (gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*)))
+
+  (gl:bind-vertex-array 0))
+
+(defun print-frame-rate (count t0)
+  (let ((time (get-internal-real-time)))
+    (when (= t0 0)
+      (setq t0 time))
+    (when (>= (- time t0)
+	      (* 1 internal-time-units-per-second))
+      (let* ((seconds (/ (- time t0) internal-time-units-per-second))
+	     (fps (/ count seconds)))
+	(format t "~d frames in ~3,1f seconds = ~6,3f fps~%"
+		count seconds fps))
+      (setq t0 time)
+      (setq count 0)
+      t)))
 
 (defun run ()
-  (let ((glut:*run-main-loop-after-display* nil))
-    (show-window)
-    (glut:main-loop)))
+  (glfw:with-init
+    (let ((time (get-internal-real-time))
+	  (window (glfw:create-window :width 800
+				      :height 600
+				      :title "LearnOpenGL"
+				      :context-version-major 3
+				      :context-version-minor 3
+				      :opengl-profile :opengl-core-profile)))
+
+      (glfw:set-window-size-callback 'window-size-callback)
+      (glfw:set-key-callback 'process-input)
+
+      (glfw:set-input-mode :cursor :disabled window)
+      (glfw:set-cursor-position-callback 'process-cursor-pos)
+      
+      (gl:viewport 0 0 800 600)
+      (gl:enable :depth-test)
+
+      (setup window)
+
+      (loop for frame from 0
+	    until (glfw:window-should-close-p window)
+	    do (progn
+		 (render)
+		 
+		 (glfw:swap-buffers window)
+		 (glfw:poll-events)
+
+		 (let ((current-frame (glfw:get-time)))
+		   (setf *delta-time* (- current-frame *last-frame*))
+		   (setf *last-frame* current-frame))
+		 
+		 (if (eql 0 (mod frame 200))
+		     (let* ((new-time (get-internal-real-time))
+			    (dt (- new-time time))
+			    (seconds (/ dt internal-time-units-per-second))
+			    (fps (/ 200.0 seconds)))
+		       (format t "FPS: ~6,3d~%" fps)
+		       (setq time new-time)))))
+      (cleanup))))

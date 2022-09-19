@@ -1,7 +1,7 @@
 (defpackage :dev.litvak.game-engine
   (:use
-   :common-lisp)
+   :common-lisp
+   :3d-vectors
+   :3d-matrices)
   (:export
-   :gl-window
-   :show-window
    :run))
