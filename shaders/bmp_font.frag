@@ -2,7 +2,7 @@
 
 out vec4 FragColor;
 
-int vec2 texCoord;
+in vec2 texCoord;
 
 uniform sampler2D fontTexture;
 

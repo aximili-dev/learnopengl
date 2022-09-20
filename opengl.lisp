@@ -99,10 +99,10 @@
 (defparameter *vao* nil)
 (defparameter *ebo* nil)
 
-   
-
 (defparameter *texture* nil)
 (defparameter *face-texture* nil)
+
+(defparameter *font* nil)
 
 (defun setup (window)
   ;; Load texture
@@ -149,7 +149,9 @@
   (gl:enable-vertex-attrib-array 1)
 
   (gl:bind-buffer :array-buffer 0)
-  (gl:bind-vertex-array 0))
+  (gl:bind-vertex-array 0)
+
+  (setf *font* (load-bitmap-font #P"./charmap.png")))
 
 (defun cleanup ()
   (format t "DEBUG: Cleaning up~%")
@@ -220,7 +222,7 @@
   (process-mouse window x-pos y-pos))
 
 (defun render ()
-  (gl:clear-color 0.9 0.3 0.3 1.0)
+  (gl:clear-color 0.3 0.3 0.3 1.0)
   (gl:clear :color-buffer :depth-buffer)
   
   (gl:active-texture :texture0)
@@ -246,6 +248,10 @@
     (gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*)))
 
   (gl:bind-vertex-array 0))
+
+(defun render-debug-ui ()
+  (render-bmp-char *font* #\a 4 0 0))
+      
 
 (defun print-frame-rate (count t0)
   (let ((time (get-internal-real-time)))
@@ -295,6 +301,7 @@
 	    until (glfw:window-should-close-p window)
 	    do (progn
 		 (render)
+		 (render-debug-ui)
 		 
 		 (glfw:swap-buffers window)
 		 (glfw:poll-events)
