@@ -72,5 +72,8 @@ flycheck_*.el
 # network security
 /network-security.data
 
+# Executable
+game-engine
 
-
+# ASDF stuff?
+system-index.txt
