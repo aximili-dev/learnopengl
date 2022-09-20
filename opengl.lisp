@@ -66,33 +66,6 @@
 	(vec  1.5  0.2 -1.5)
 	(vec -1.3  1.0 -1.5)))
 
-(defparameter *vertex-shader-source*
-  (with-output-to-string (s)
-    (format s "#version 330 core~%")
-    (format s "layout (location = 0) in vec3 aPos;~%")
-    (format s "layout (location = 1) in vec2 aTexCoord;~%")
-    (format s "out vec2 texCoord;~%")
-    (format s "uniform mat4 view;~%")
-    (format s "uniform mat4 model;~%")
-    (format s "uniform mat4 projection;~%")
-    (format s "void main ()~%")
-    (format s "{~%")
-    (format s "  gl_Position = projection * view * model * vec4(aPos, 1.0);~%")
-    (format s "  texCoord = vec2(aTexCoord.x, aTexCoord.y);~%")
-    (format s "}~c" #\Nul)))
-
-(defparameter *fragment-shader-source*
-  (with-output-to-string (s)
-    (format s "#version 330 core~%")
-    (format s "out vec4 FragColor;~%")
-    (format s "in vec2 texCoord;~%")
-    (format s "uniform sampler2D texture1;~%")
-    (format s "uniform sampler2D texture2;~%")
-    (format s "void main()~%")
-    (format s "{~%")
-    (format s "  FragColor = mix(texture(texture1, texCoord), texture(texture2, texCoord), 0.2);~%")
-    (format s "}~c" #\Nul)))
-
 (defparameter *shader-program* nil)
 
 (defparameter *vbo* nil)
@@ -111,8 +84,8 @@
 
   ;;Set shader program
   (setf *shader-program*
-	(load-shader-program #P"./shaders/model.vert"
-			     #P"./shaders/model.frag"))
+	(load-shader-from-disk #P"./shaders/model.vert"
+			       #P"./shaders/model.frag"))
 
   (shader-set-uniform *shader-program* "texture1" 0)
   (shader-set-uniform *shader-program* "texture2" 1)
@@ -158,7 +131,11 @@
   (gl:delete-vertex-arrays (list *vao*))
   (gl:delete-buffers (list *vbo*))
   (gl:delete-buffers (list *ebo*))
-  (gl:delete-program *shader-program*))
+  (gl:delete-textures (list *texture* *face-texture*))
+
+  (shader-free *shader-program*)
+  (unload-bitmap-font *font*))
+
 
 (defun resize (window width height)
   (gl:viewport 0 0 width height))
@@ -231,7 +208,7 @@
   (gl:active-texture :texture1)
   (gl:bind-texture :texture-2d *face-texture*)
 
-  (gl:use-program *shader-program*)
+  (shader-use *shader-program*)
 
   (dotimes (i (length *instance-positions*))
     (let ((model (meye 4))
@@ -249,10 +226,13 @@
 
   (gl:bind-vertex-array 0))
 
-(defun render-debug-ui ()
-  (render-bmp-char *font* #\a 4 0 0))
+(defun render-debug-ui (fps)
+  (render-bmp-text *font* (format nil "FPS: ~3,3f" fps) 1 0 0)
+  (render-bmp-text *font* (format nil "POS: (~{~,2f~^ ~})"
+				  (with-vec (x y z) *camera-pos*
+				    (list x y z)))
+		   1 0 1))
       
-
 (defun print-frame-rate (count t0)
   (let ((time (get-internal-real-time)))
     (when (= t0 0)
@@ -278,7 +258,7 @@
 
 (defun run ()
   (glfw:with-init
-    (let ((time (get-internal-real-time))
+    (let ((time (1- (get-internal-real-time)))
 	  (window (glfw:create-window :width 800
 				      :height 600
 				      :title "LearnOpenGL"
@@ -301,22 +281,14 @@
 	    until (glfw:window-should-close-p window)
 	    do (progn
 		 (render)
-		 (render-debug-ui)
+
+		 (let* ((new-time (get-internal-real-time))
+			(dt (- new-time time))
+			(seconds (/ dt internal-time-units-per-second)))
+		   (unless (eql seconds 0)
+		     (render-debug-ui (/ 1 seconds))
+		     (setf time new-time)))
 		 
 		 (glfw:swap-buffers window)
-		 (glfw:poll-events)
-
-		 (let ((current-frame (glfw:get-time)))
-		   (setf *delta-time* (- current-frame *last-frame*))
-		   (setf *last-frame* current-frame))
-		 
-		 (if (eql 0 (mod frame 200))
-		     (let* ((new-time (get-internal-real-time))
-			    (dt (- new-time time))
-			    (seconds (/ dt internal-time-units-per-second))
-			    (fps (/ 200.0 seconds)))
-		       (format t "FPS: ~3,3d" fps)
-		       (print-user-position)
-		       (format t "~%")
-		       (setq time new-time)))))
+		 (glfw:poll-events)))
       (cleanup))))

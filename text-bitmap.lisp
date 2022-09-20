@@ -62,14 +62,14 @@
 	 (vao (gl:gen-vertex-array))
 	 (vbo (gl:gen-buffer))
 	 (ebo (gl:gen-buffer))
-	 (program-id (load-shader-program #P"./shaders/bmp_font.vert"
-					  #P"./shaders/bmp_font.frag")))
+	 (program-id (load-shader-from-disk #P"./shaders/bmp_font.vert"
+					    #P"./shaders/bmp_font.frag")))
     (gl:bind-texture :texture-2d texture-id)
 
     (gl:tex-parameter :texture-2d :texture-wrap-s :clamp-to-edge)
     (gl:tex-parameter :texture-2d :texture-wrap-t :clamp-to-edge)
-    (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear)
-    (gl:tex-parameter :texture-2d :texture-mag-filter :linear)
+    (gl:tex-parameter :texture-2d :texture-min-filter :nearest)
+    (gl:tex-parameter :texture-2d :texture-mag-filter :nearest)
 
     (gl:tex-image-2d :texture-2d
 		     0 :rgb
@@ -116,49 +116,49 @@
 		   :vbo vbo
 		   :ebo ebo)))
 
+(defmethod unload-bitmap-font ((font bitmap-font))
+  (with-slots (vao vbo ebo program-id texture-id) font
+    (gl:delete-vertex-arrays (list vao))
+    (gl:delete-buffers (list vbo ebo))
+    (gl:delete-texture texture-id)
+
+    (shader-free program-id)))
+
 (defmethod get-char-tex-coords ((font bitmap-font) char)
   (let ((low (ldb (byte 4 0) (char-code char)))
 	(high (ldb (byte 12 4) (char-code char))))
     (cons (+ 98 (* low 14))
 	  (+ 66 (* (- high 2) 13)))))
 
-(defmethod render-bmp-char ((font bitmap-font) char scale x y)
+(defmethod render-bmp-char ((font bitmap-font) char scale char-x char-y)
   (with-slots (texture-id texture-width texture-height program-id vao vbo char-width char-height) font
     (let ((model (meye 4))
-	  (projection (mortho 0 800 600 0 -1 1000)))
+	  (projection (mortho 0 800 600 0 -1 1000))
+	  (texture-id texture-id))
       (gl:active-texture :texture0)
       (gl:bind-texture :texture-2d texture-id)
 
-      (gl:use-program program-id)
+      (shader-use program-id)
 
       (gl:bind-vertex-array vao)
       (gl:bind-buffer :array-buffer vbo)
       
-      (gl:with-gl-mapped-buffer (arr :array-buffer :write-only :float)
-	(let* ((tex-coords (get-char-tex-coords font char))
-	       (x (car tex-coords))
-	       (y (- texture-height (cdr tex-coords))))
-
-	  (loop for i from 0 below 16
-		collecting (gl:glaref arr i))
-	  
-	  (setf (gl:glaref arr 2) (float (/ x texture-width)))
-	  (setf (gl:glaref arr 3) (float (/ y texture-height)))
-
-	  (setf (gl:glaref arr 6) (float (/ (+ x char-width) texture-width)))
-	  (setf (gl:glaref arr 7) (float (/ y texture-height)))
-
-	  (setf (gl:glaref arr 10) (float (/ x texture-width)))
-	  (setf (gl:glaref arr 11) (float (/ (- y char-height) texture-height)))
-
-	  (setf (gl:glaref arr 14) (float (/ (+ x char-width) texture-width)))
-	  (setf (gl:glaref arr 15) (float (/ (- y char-height) texture-height)))))
-
-      (gl:get-program-info-log program-id)
+      (let* ((tex-coords (get-char-tex-coords font char))
+	     (xl (float (car tex-coords)))
+	     (yt (float (- texture-height (cdr tex-coords))))
+	     (xr (+ xl char-width))
+	     (yb (- yt char-height))
+	     (vertices (list 0.0  0.0  (/ xl texture-width) (/ yt texture-height)
+			     7.0  0.0  (/ xr texture-width) (/ yt texture-height)
+			     7.0 11.0  (/ xr texture-width) (/ yb texture-height)
+			     0.0 11.0  (/ xl texture-width) (/ yb texture-height)))
+	     (gl-arr (make-gl-array (make-array (length vertices) :initial-contents vertices) :float)))
+	(gl:buffer-sub-data :array-buffer gl-arr)
+	(gl:free-gl-array gl-arr))
 
       (nmscale model (vec scale scale 1))
-      (nmtranslate model (vec (* scale 7 x)
-			      (* scale 11 y)
+      (nmtranslate model (vec (* 7 char-x)
+			      (* 11 char-y)
 			      1))
 
       (shader-set-uniform program-id "model" (marr model))
@@ -170,5 +170,4 @@
   (with-slots (char-width) font
     (loop for c across text
 	  for i from 0
-	  with x 
-	  do (render-bmp-char font c (+ x char-width) y))))
+	  do (render-bmp-char font c scale (+ x i) y))))
