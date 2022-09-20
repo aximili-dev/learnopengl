@@ -1,4 +1,4 @@
-(in-package :dev.litvak.game-engine)
+(in-package :game-engine)
 
 (defun make-gl-array (array type)
   (let* ((n-elements (length array))
@@ -99,92 +99,20 @@
 (defparameter *vao* nil)
 (defparameter *ebo* nil)
 
-(defun assert-compile (shader)
-  (unless (gl:get-shader shader :compile-status)
-    (error (format nil "Error in shader: ~a"
-		   (gl:get-shader-info-log shader)))))
-
-(defmacro gl-assert (object get-iv status-key get-info-log)
-  `(unless (,get-iv ,object ,status-key)
-     (format t "Error")
-     (error (format nil "Error in ~a ~a: ~a"
-		    (function ,get-iv)
-		    ,status-key
-		    (,get-info-log ,object)))))
-
-(defun create-shader (source type)
-  (let ((shader (gl:create-shader type)))
-    (gl:shader-source shader (list source))
-    (gl:compile-shader shader)
-    (gl-assert shader
-	       gl:get-shader :compile-status
-	       gl:get-shader-info-log)
-    shader))
-
-(defun create-shader-program (vertex-source fragment-source &optional (destroy-shaders t))
-  (let ((vs (create-shader vertex-source :vertex-shader))
-	(fs (create-shader fragment-source :fragment-shader))
-	(program (gl:create-program)))
-    (gl:attach-shader program vs)
-    (gl:attach-shader program fs)
-    (gl:link-program program)
-    (gl-assert program
-	       gl:get-program :link-status
-	       gl:get-program-info-log)
-    (when destroy-shaders
-      (format t "DEBUG: Deleting shaders after creating program~%")
-      (gl:delete-shader vs)
-      (gl:delete-shader fs))
-    program))
-
-(defun shader-set-uniform (program-id location &rest vector)
-  "Sets a uniform in a shader program. Changes the active shader."
-  (let ((location (gl:get-uniform-location program-id location))
-	(first (car vector)))
-    (if (eql location -1)
-	(error "Couldn't find location ~a in program ~d" location program-id))
-    (let ((func (cond ((typep first 'integer) #'gl:uniformi)
-		      ((typep first 'real)    #'gl:uniformf)
-		      ((typep first 'boolean) #'gl:uniformi)
-		      ((typep first 'array)   #'gl:uniform-matrix-4fv)
-		      (t (error "Unrecognized type in vector")))))
-      (gl:use-program program-id)
-      (apply func location vector))))
    
 
 (defparameter *texture* nil)
 (defparameter *face-texture* nil)
 
-(defun load-png-texture (path &rest pngload-params)
-  (let ((png (apply #'pngload:load-file path :flatten t pngload-params))
-	(texture-id (car (gl:gen-textures 1))))
-    (gl:bind-texture :texture-2d texture-id)
-
-    (gl:tex-parameter :texture-2d :texture-wrap-s :repeat)
-    (gl:tex-parameter :texture-2d :texture-wrap-t :repeat)
-    (gl:tex-parameter :texture-2d :texture-min-filter :linear-mipmap-linear)
-    (gl:tex-parameter :texture-2d :texture-mag-filter :linear)
-
-    (gl:tex-image-2d :texture-2d 0 :rgba
-		     (pngload:width png)
-		     (pngload:height png)
-		     0 :rgba :unsigned-byte
-		     (pngload:data png))
-    (gl:generate-mipmap :texture-2d)
-    texture-id))
-
-(defun radians (degrees)
-  (/ (* degrees pi) 180))
-
 (defun setup (window)
   ;; Load texture
-  (setf *texture* (load-png-texture #P"./container.png"))
-  (setf *face-texture* (load-png-texture #P"./awesomeface.png" :flip-y t))
+  (setf *texture* (load-texture #P"./container.png"))
+  (setf *face-texture* (load-texture #P"./awesomeface.png"))
 
   ;;Set shader program
   (setf *shader-program*
-	(create-shader-program *vertex-shader-source*
-			       *fragment-shader-source*))
+	(load-shader-program #P"./shaders/model.vert"
+			     #P"./shaders/model.frag"))
 
   (shader-set-uniform *shader-program* "texture1" 0)
   (shader-set-uniform *shader-program* "texture2" 1)
@@ -292,7 +220,7 @@
   (process-mouse window x-pos y-pos))
 
 (defun render ()
-  (gl:clear-color 0.2 0.3 0.3 1.0)
+  (gl:clear-color 0.9 0.3 0.3 1.0)
   (gl:clear :color-buffer :depth-buffer)
   
   (gl:active-texture :texture0)
@@ -327,11 +255,20 @@
 	      (* 1 internal-time-units-per-second))
       (let* ((seconds (/ (- time t0) internal-time-units-per-second))
 	     (fps (/ count seconds)))
-	(format t "~d frames in ~3,1f seconds = ~6,3f fps~%"
-		count seconds fps))
+	(format t "~d frames in ~3,1f seconds = ~6,3f fps"
+		count seconds fps)
+	(print-user-position)
+	(format t "~%"))
       (setq t0 time)
       (setq count 0)
       t)))
+
+(defun print-user-position ()
+  (format t " POS: ~a - YAW: ~2d - PITCH: ~2d"
+	  *camera-pos*
+	  *yaw*
+	  *pitch*))
+      
 
 (defun run ()
   (glfw:with-init
@@ -346,7 +283,7 @@
       (glfw:set-window-size-callback 'window-size-callback)
       (glfw:set-key-callback 'process-input)
 
-      (glfw:set-input-mode :cursor :disabled window)
+      ;(glfw:set-input-mode :cursor :disabled window)
       (glfw:set-cursor-position-callback 'process-cursor-pos)
       
       (gl:viewport 0 0 800 600)
@@ -371,6 +308,8 @@
 			    (dt (- new-time time))
 			    (seconds (/ dt internal-time-units-per-second))
 			    (fps (/ 200.0 seconds)))
-		       (format t "FPS: ~6,3d~%" fps)
+		       (format t "FPS: ~3,3d" fps)
+		       (print-user-position)
+		       (format t "~%")
 		       (setq time new-time)))))
       (cleanup))))

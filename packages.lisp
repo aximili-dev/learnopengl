@@ -1,4 +1,6 @@
-(defpackage :dev.litvak.game-engine
+(in-package :common-lisp-user)
+
+(defpackage :game-engine
   (:use
    :common-lisp
    :3d-vectors
