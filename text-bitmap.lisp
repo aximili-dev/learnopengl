@@ -13,7 +13,9 @@
    (program-id :initarg :program-id)
    (vao :initarg :vao)
    (vbo :initarg :vbo)
-   (ebo :initarg :ebo)))
+   (ebo :initarg :ebo)
+   (v-width :initarg :v-width)
+   (v-height :initarg :v-height)))
 
 (defclass text-grid ()
   ((width :initarg :width)
@@ -54,7 +56,7 @@
 
 (defparameter *initial-bmp-text* "Hello world")
 
-(defun load-bitmap-font (path)
+(defun load-bitmap-font (path v-width v-height)
   (let* ((png    (pngload:load-file path :flatten t :flip-y t))
 	 (width  (pngload:width  png))
 	 (height (pngload:height png))
@@ -114,7 +116,9 @@
 		   :program-id program-id
 		   :vao vao
 		   :vbo vbo
-		   :ebo ebo)))
+		   :ebo ebo
+		   :v-width v-width
+		   :v-height v-height)))
 
 (defmethod unload-bitmap-font ((font bitmap-font))
   (with-slots (vao vbo ebo program-id texture-id) font
@@ -131,9 +135,12 @@
 	  (+ 66 (* (- high 2) 13)))))
 
 (defmethod render-bmp-char ((font bitmap-font) char scale char-x char-y)
-  (with-slots (texture-id texture-width texture-height program-id vao vbo char-width char-height) font
+  (with-slots (texture-id texture-width texture-height
+	       program-id vao vbo
+	       char-width char-height
+	       v-width v-height) font
     (let ((model (meye 4))
-	  (projection (mortho 0 800 600 0 -1 1000))
+	  (projection (mortho 0 v-width v-height 0 -1 1000))
 	  (texture-id texture-id))
       (gl:active-texture :texture0)
       (gl:bind-texture :texture-2d texture-id)

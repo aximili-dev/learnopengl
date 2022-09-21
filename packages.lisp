@@ -6,4 +6,5 @@
    :3d-vectors
    :3d-matrices)
   (:export
-   :run))
+   :run)
+  (:shadow :speed))

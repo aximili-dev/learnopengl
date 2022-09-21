@@ -68,6 +68,9 @@
 
 (defparameter *shader-program* nil)
 
+(defparameter *viewport-width* 800)
+(defparameter *viewport-height* 600)
+
 (defparameter *vbo* nil)
 (defparameter *vao* nil)
 (defparameter *ebo* nil)
@@ -77,7 +80,70 @@
 
 (defparameter *font* nil)
 
+(defparameter *camera* nil)
+
+
+
+(defparameter *delta-time* 0.0)
+(defparameter *last-frame* 0.0)
+
+(defparameter *sensitivity* 0.1)
+
+(defparameter *mouse-just-entered* nil)
+(defparameter *last-x* 400)
+(defparameter *last-y* 300)
+
+(defparameter *held-key* nil)
+
+
+;;;
+;;; GLFW Callbacks
+;;;
+(defun resize (window width height)
+  (with-slots (v-width v-height) *font*
+    (setf v-width width)
+    (setf v-height height))
+  
+  (setf *viewport-width* width)
+  (setf *viewport-height* height)
+  (gl:viewport 0 0 width height))
+
+(defun process-input (window key scancode action mod-keys)
+  (when (or (eql action :press)
+	    (eql action :repeat))
+    (case key
+      (:escape (glfw:set-window-should-close window))
+      (:w (handle-keyboard *camera* :w *delta-time*))
+      (:s (handle-keyboard *camera* :s *delta-time*))
+      (:a (handle-keyboard *camera* :a *delta-time*))
+      (:d (handle-keyboard *camera* :d *delta-time*))
+      (:space (handle-keyboard *camera* :space *delta-time*))
+      (:c (handle-keyboard *camera* :c *delta-time*)))))
+
+(defun process-mouse (window x-pos y-pos)
+  (let ((x-offset (- x-pos *last-x*))
+	(y-offset (- *last-y* y-pos)))
+    (setf *last-x* x-pos)
+    (setf *last-y* y-pos)
+
+    (if *mouse-just-entered*
+	(setf *mouse-just-entered* nil)
+	(handle-mouse-movement *camera* x-offset y-offset))))
+
+(defun process-mouse-enter (window entered)
+  (if entered
+      (setf *mouse-just-entered* t)))
+
+;;;
+;;; OpenGL code
+;;;
 (defun setup (window)
+  "Sets up OpenGL so the engine can work."
+  (setf *camera* (make-instance 'fps-camera
+				:sensitivity 0.1
+				:speed 10.0
+				:pos (vec 0 0 10)))
+  
   ;; Load texture
   (setf *texture* (load-texture #P"./container.png"))
   (setf *face-texture* (load-texture #P"./awesomeface.png"))
@@ -124,9 +190,10 @@
   (gl:bind-buffer :array-buffer 0)
   (gl:bind-vertex-array 0)
 
-  (setf *font* (load-bitmap-font #P"./charmap.png")))
+  (setf *font* (load-bitmap-font #P"./charmap.png" *viewport-width* *viewport-height*)))
 
 (defun cleanup ()
+  "Cleans up OpenGL."
   (format t "DEBUG: Cleaning up~%")
   (gl:delete-vertex-arrays (list *vao*))
   (gl:delete-buffers (list *vbo*))
@@ -136,69 +203,8 @@
   (shader-free *shader-program*)
   (unload-bitmap-font *font*))
 
-
-(defun resize (window width height)
-  (gl:viewport 0 0 width height))
-
-(glfw:def-window-size-callback window-size-callback (window width height)
-  (resize window width height))
-
-(defparameter *camera-pos*   (vec 0 0 3))
-(defparameter *camera-front* (vec 0 0 -1))
-(defparameter *camera-up*    (vec 0 1 0))
-
-(defparameter *camera-speed* 1500.0)
-
-(defparameter *delta-time* 0.0)
-(defparameter *last-frame* 0.0)
-
-(defparameter *sensitivity* 0.1)
-(defparameter *last-x* 400)
-(defparameter *last-y* 300)
-
-(defparameter *yaw* 0)
-(defparameter *pitch* 0)
-
-(defun process-input (window key scancode action mod-keys)
-  (let ((*camera-speed* (* *camera-speed* *delta-time*)))
-    (when (eql action :press)
-      (case key
-	(:escape (glfw:set-window-should-close window))
-	(:w (nv+ *camera-pos* (v* *camera-speed* *camera-front*)))
-	(:s (nv- *camera-pos* (v* *camera-speed* *camera-front*)))
-	(:a (nv- *camera-pos* (v* (vunit (vc *camera-front* *camera-up*))
-				  *camera-speed*)))
-	(:d (nv+ *camera-pos* (v* (vunit (vc *camera-front* *camera-up*))
-				  *camera-speed*)))))))
-
-(glfw:def-key-callback process-input (window key scancode action mod-keys)
-  (process-input window key scancode action mod-keys))
-
-(defun clamp (value floor ceiling)
-  (min (max value floor) ceiling))
-
-(defun process-mouse (window x-pos y-pos)
-  (let ((x-offset (* (- x-pos *last-x*) *sensitivity*))
-	(y-offset (* (- *last-y* y-pos) *sensitivity*)))
-    (setf *last-x* x-pos)
-    (setf *last-y* y-pos)
-
-    (incf *yaw* x-offset)
-    (setf *pitch* (clamp (+ *pitch* y-offset) -89 89)))
-
-  (let* ((yaw (radians *yaw*))
-	 (pitch (radians *pitch*))
-	 (x (cos (* yaw pitch)))
-	 (y (sin pitch))
-	 (z (sin (* yaw pitch)))
-	 (direction (vec x y z)))
-    (setf *camera-front* (vunit direction))))
-	 
-
-(glfw:def-cursor-pos-callback process-cursor-pos (window x-pos y-pos)
-  (process-mouse window x-pos y-pos))
-
-(defun render ()
+(defun render (v-width v-height)
+  "Renders everything."
   (gl:clear-color 0.3 0.3 0.3 1.0)
   (gl:clear :color-buffer :depth-buffer)
   
@@ -212,10 +218,10 @@
 
   (dotimes (i (length *instance-positions*))
     (let ((model (meye 4))
-	  (view (mlookat *camera-pos* *camera-front* *camera-up*))
-	  (projection (mperspective (radians 45) (/ 800 600) 0.1 1000)))
-      (nmtranslate model (nth i *instance-positions*))
+	  (view (view-matrix *camera*))
+	  (projection (mperspective 45 (/ v-width v-height) 0.1 1000)))
       (nmrotate model (vec (/ 0.5 (+ 0.1 i)) (* i 0.1) 0) (radians (+ 10 (* 10 i (glfw:get-time)))))
+      (nmtranslate model (nth i *instance-positions*))
 
       (shader-set-uniform *shader-program* "view" (marr view))
       (shader-set-uniform *shader-program* "model" (marr model))
@@ -227,64 +233,51 @@
   (gl:bind-vertex-array 0))
 
 (defun render-debug-ui (fps)
+  "Renders debug info."
   (render-bmp-text *font* (format nil "FPS: ~3,3f" fps) 1 0 0)
-  (render-bmp-text *font* (format nil "POS: (~{~,2f~^ ~})"
-				  (with-vec (x y z) *camera-pos*
-				    (list x y z)))
-		   1 0 1))
-      
-(defun print-frame-rate (count t0)
-  (let ((time (get-internal-real-time)))
-    (when (= t0 0)
-      (setq t0 time))
-    (when (>= (- time t0)
-	      (* 1 internal-time-units-per-second))
-      (let* ((seconds (/ (- time t0) internal-time-units-per-second))
-	     (fps (/ count seconds)))
-	(format t "~d frames in ~3,1f seconds = ~6,3f fps"
-		count seconds fps)
-	(print-user-position)
-	(format t "~%"))
-      (setq t0 time)
-      (setq count 0)
-      t)))
+  (render-bmp-text *font* (format nil "POS: (~{~,2f~^ ~}) FRONT: (~{~,2f~^ ~}) |~,3f|"
+				  (with-vec (x y z) (pos *camera*)
+				    (list x y z))
+				  (with-vec (x y z) (front *camera*)
+				    (list x y z))
+				  (vlength (front *camera*)))
+		   1 0 1)
+  (with-camera-props (pitch yaw) *camera*
+    (render-bmp-text *font* (format nil "PITCH: ~,2f   YAW: ~,2f"
+				    (degrees pitch)
+				    (degrees yaw))
+		     1 0 2))
+  (render-bmp-text *font* (format nil "X: ~4d  Y: ~4d" *last-x* *last-y*)
+		   1 0 3))
 
-(defun print-user-position ()
-  (format t " POS: ~a - YAW: ~2d - PITCH: ~2d"
-	  *camera-pos*
-	  *yaw*
-	  *pitch*))
-      
-
+;;;
+;;; Main loop
+;;;
 (defun run ()
-  (glfw:with-init
-    (let ((time (1- (get-internal-real-time)))
-	  (window (glfw:create-window :width 800
-				      :height 600
-				      :title "LearnOpenGL"
-				      :context-version-major 3
-				      :context-version-minor 3
-				      :opengl-profile :opengl-core-profile)))
+  (with-glfw (window
+	      :width 800
+	      :height 600
+	      :title "Game Engine")
 
-      (glfw:set-window-size-callback 'window-size-callback)
-      (glfw:set-key-callback 'process-input)
+    (setup-callbacks window
+		     :resize #'resize
+		     :keyboard #'process-input
+		     :cursor-pos #'process-mouse
+		     :cursor-enter #'process-mouse-enter)
 
-      ;(glfw:set-input-mode :cursor :disabled window)
-      (glfw:set-cursor-position-callback 'process-cursor-pos)
+    (let ((time (1- (get-internal-real-time))))
       
-      (gl:viewport 0 0 800 600)
-      (gl:enable :depth-test)
-
       (setup window)
-
+      
       (loop for frame from 0
 	    until (glfw:window-should-close-p window)
 	    do (progn
-		 (render)
+		 (render *viewport-width* *viewport-height*)
 
 		 (let* ((new-time (get-internal-real-time))
 			(dt (- new-time time))
 			(seconds (/ dt internal-time-units-per-second)))
+		   (setf *delta-time* seconds)
 		   (unless (eql seconds 0)
 		     (render-debug-ui (/ 1 seconds))
 		     (setf time new-time)))

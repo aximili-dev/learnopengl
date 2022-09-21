@@ -10,6 +10,7 @@
 	       :pngload)
   :components ((:file "packages")
 	       (:file "camera")
+	       (:file "glfw")
 	       (:file "io")
 	       (:file "opengl")
 	       (:file "shader")
