@@ -93,8 +93,7 @@
 (defparameter *last-x* 400)
 (defparameter *last-y* 300)
 
-(defparameter *held-key* nil)
-
+(defparameter *keys* '())
 
 ;;;
 ;;; GLFW Callbacks
@@ -109,16 +108,14 @@
   (gl:viewport 0 0 width height))
 
 (defun process-input (window key scancode action mod-keys)
-  (when (or (eql action :press)
-	    (eql action :repeat))
-    (case key
-      (:escape (glfw:set-window-should-close window))
-      (:w (handle-keyboard *camera* :w *delta-time*))
-      (:s (handle-keyboard *camera* :s *delta-time*))
-      (:a (handle-keyboard *camera* :a *delta-time*))
-      (:d (handle-keyboard *camera* :d *delta-time*))
-      (:space (handle-keyboard *camera* :space *delta-time*))
-      (:c (handle-keyboard *camera* :c *delta-time*)))))
+  (format t "~a ~a ~a ~a" key scancode action mod-keys)
+  (if (eql action :press)
+      (case key
+	(:escape (glfw:set-window-should-close window))
+	(otherwise (push key *keys*))))
+  (if (eql action :release)
+      (flet ((is-key (other) (eql other key)))
+	(setf *keys* (remove-if #'is-key *keys*)))))
 
 (defun process-mouse (window x-pos y-pos)
   (let ((x-offset (- x-pos *last-x*))
@@ -141,7 +138,7 @@
   "Sets up OpenGL so the engine can work."
   (setf *camera* (make-instance 'fps-camera
 				:sensitivity 0.1
-				:speed 10.0
+				:speed 1.0
 				:pos (vec 0 0 10)))
   
   ;; Load texture
@@ -256,6 +253,11 @@
 ;;;
 ;;; Main loop
 ;;;
+
+(defun tick (time dt)
+  (process-tick *camera* time dt))
+
+;;; Time step algorithm from https://gafferongames.com/post/fix_your_timestep/
 (defun run ()
   (with-glfw (window
 	      :width 800
@@ -268,23 +270,34 @@
 		     :cursor-pos #'process-mouse
 		     :cursor-enter #'process-mouse-enter)
 
-    (let ((time (1- (get-internal-real-time))))
-      
+    (let ((time          (get-internal-run-time))
+	  (dt            0.01)
+	  (current-time  (/ (get-internal-run-time) internal-time-units-per-second))
+	  (acc           0.0))
       (setup window)
       
       (loop for frame from 0
 	    until (glfw:window-should-close-p window)
 	    do (progn
-		 (render *viewport-width* *viewport-height*)
+		 (let* ((new-time   (/ (get-internal-run-time) internal-time-units-per-second))
+			(frame-time (- new-time current-time)))
+		   (if (> frame-time 0.25)
+		       (setf frame-time 0.25))
+		   
+		   (incf acc frame-time)
 
-		 (let* ((new-time (get-internal-real-time))
-			(dt (- new-time time))
-			(seconds (/ dt internal-time-units-per-second)))
-		   (setf *delta-time* seconds)
-		   (unless (eql seconds 0)
-		     (render-debug-ui (/ 1 seconds))
-		     (setf time new-time)))
+		   (loop while (>= acc dt)
+			 do (progn
+			      (tick time dt)
+			      (incf time dt)
+			      (decf acc dt)))
+
+		   (render *viewport-width* *viewport-height*)
+
+		   (if (> frame-time 0)
+		       (render-debug-ui (/ 1 frame-time))
+		       (render-debug-ui -12.0))
 		 
-		 (glfw:swap-buffers window)
-		 (glfw:poll-events)))
+		   (glfw:swap-buffers window)
+		   (glfw:poll-events))))
       (cleanup))))

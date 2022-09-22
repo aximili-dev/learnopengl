@@ -69,6 +69,7 @@ If false, forward moves camera forward at same height")
 (defmethod handle-mouse-movement ((camera fps-camera) dx dy)
   (with-slots (pitch yaw sensitivity) camera
     (incf pitch (* sensitivity dy))
+    (setf pitch (clamp pitch -89.0 89.0))
     (incf yaw (* sensitivity dx))))
 
 (defmethod view-matrix ((camera camera))
@@ -79,3 +80,17 @@ If false, forward moves camera forward at same height")
 (defmethod move ((camera camera) delta)
   (with-slots (pos) camera
     (setf pos (v+ pos delta))))
+
+(defmethod process-tick ((camera camera) time dt)
+  (with-slots (speed pos) camera
+    (with-camera-props (front right) camera
+      (let ((distance  (* speed dt))
+	    (direction (cond
+			 ((find :w *keys*) (vc +vy+ right))
+			 ((find :a *keys*) (v- right))
+			 ((find :s *keys*) (vc right +vy+))
+			 ((find :d *keys*) (v+ right))
+			 ((find :space *keys*) +vy+)
+			 ((find :c *keys*) (v- +vy+)))))
+	(if direction
+	    (move camera (v* (vunit direction) distance)))))))
