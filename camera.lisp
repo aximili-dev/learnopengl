@@ -2,29 +2,34 @@
 
 (defclass camera ()
   ((pos
-    :accessor pos
     :initarg :pos
     :initform (vec 0 0 0))
-   (front
-    :accessor front
-    :initarg :front
-    :initform (vec 0 0 1))
-   (up
-    :accessor up
-    :initarg :up
-    :initform (vec 0 1 0))
+   (pitch
+    :initarg :pitch
+    :initform 0.0
+    :documentation "Camera pitch in degrees.")
+   (yaw
+    :initarg :yaw
+    :initform 90.0
+    :documentation "Camera yaw in ccw degrees from positive x.")
+   (roll
+    :initarg :roll
+    :initform 0.0
+    :documentation "Camera roll around local z axis.")
    (speed
     :accessor speed
     :initarg :speed
     :initform 1.0
     :documentation "Camera speed in \"units\" per second")))
 
-(defmacro with-camera-props ((pitch yaw) camera &body body)
-  (let ((front-var (gensym)))
-    `(with-slots ((,front-var front)) ,camera
-       (let ((,pitch (asin (vy ,front-var)))
-	     (,yaw (vangle +vx+ (vx_z ,front-var))))
-	 ,@body))))
+(defmacro with-camera-props ((front right) camera &body body)
+  `(with-slots (pitch yaw) ,camera
+     (let* ((x (* (cos (radians pitch)) (cos (radians yaw))))
+	    (y (* (sin (radians pitch))))
+	    (z (* (cos (radians pitch)) (sin (radians yaw))))
+	    (,front (vunit (vec x y z)))
+	    (,right (vunit (vc ,front +vy+))))
+       ,@body)))
 
 (defclass fps-camera (camera) 
   ((can-fly
@@ -46,36 +51,30 @@ If false, forward moves camera forward at same height")
   (:documentation "Handles keyboard input."))
 
 (defmethod handle-keyboard ((camera fps-camera) key dt)
-  (with-slots (speed pos front up) camera
-    (let* ((distance (* speed dt))
-	   (right (vc front up))
-	   (direction (case key
-			(:w (vc up right))
-			(:a (v- right))
-			(:s (v- (vc up right)))
-			(:d (v+ right))
-			(:space (vcopy up))
-			(:c (v- up)))))
-      (move camera (v* (vunit direction) distance)))))
+  (with-slots (speed pos) camera
+    (with-camera-props (front right) camera
+      (let* ((distance (* speed dt))
+	     (direction (case key
+			  (:w (vc +vy+ right))
+			  (:a (v- right))
+			  (:s (vc right +vy+))
+			  (:d (v+ right))
+			  (:space +vy+)
+			  (:c (v- +vy+)))))
+	(move camera (v* (vunit direction) distance))))))
       
 (defgeneric handle-mouse-movement (camera dx dy)
   (:documentation "Handle mouse movement."))
 
 (defmethod handle-mouse-movement ((camera fps-camera) dx dy)
-  (with-slots (front sensitivity) camera
-    (with-camera-props (pitch yaw) camera
-      (incf pitch (* sensitivity (radians dy)))
-      (decf yaw (* sensitivity (radians dx)))
-      (print dx)
-      (let* ((pitch (clamp pitch (- (/ pi 2)) (/ pi 2)))
-	     (x (* (cos yaw) (cos pitch)))
-	     (y (* (sin pitch)))
-	     (z (* (sin yaw) (cos pitch))))
-	(setf front (vunit (vec x y z)))))))
+  (with-slots (pitch yaw sensitivity) camera
+    (incf pitch (* sensitivity dy))
+    (incf yaw (* sensitivity dx))))
 
 (defmethod view-matrix ((camera camera))
-  (with-slots (pos front) camera
-    (mlookat pos (v+ pos front) (vec 0 1 0))))
+  (with-slots (pos) camera
+    (with-camera-props (front right) camera
+      (mlookat pos (v+ pos front) (vec 0 1 0)))))
 
 (defmethod move ((camera camera) delta)
   (with-slots (pos) camera

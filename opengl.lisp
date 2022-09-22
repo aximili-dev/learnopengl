@@ -235,17 +235,20 @@
 (defun render-debug-ui (fps)
   "Renders debug info."
   (render-bmp-text *font* (format nil "FPS: ~3,3f" fps) 1 0 0)
-  (render-bmp-text *font* (format nil "POS: (~{~,2f~^ ~}) FRONT: (~{~,2f~^ ~}) |~,3f|"
-				  (with-vec (x y z) (pos *camera*)
+
+  (with-slots (pos) *camera*
+    (with-camera-props (front right) *camera*
+      (render-bmp-text *font* (format nil "POS: (~{~,2f~^ ~}) FRONT: (~{~,2f~^ ~}) |~,3f|"
+				      (with-vec (x y z) pos
+					(list x y z))
+				  (with-vec (x y z) front
 				    (list x y z))
-				  (with-vec (x y z) (front *camera*)
-				    (list x y z))
-				  (vlength (front *camera*)))
-		   1 0 1)
-  (with-camera-props (pitch yaw) *camera*
-    (render-bmp-text *font* (format nil "PITCH: ~,2f   YAW: ~,2f"
-				    (degrees pitch)
-				    (degrees yaw))
+				  (vlength front))
+		       1 0 1)))
+  (with-slots (pitch yaw) *camera*
+    (render-bmp-text *font* (format nil "PITCH: ~,2f°   YAW: ~,2f°"
+				    pitch
+				    yaw)
 		     1 0 2))
   (render-bmp-text *font* (format nil "X: ~4d  Y: ~4d" *last-x* *last-y*)
 		   1 0 3))
