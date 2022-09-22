@@ -12,6 +12,7 @@
 	       (:file "camera")
 	       (:file "glfw")
 	       (:file "io")
+	       ;(:file "mesh")
 	       (:file "opengl")
 	       (:file "shader")
 	       (:file "text-bitmap")
