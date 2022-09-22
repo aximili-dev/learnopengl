@@ -235,11 +235,17 @@
 
   (shader-use *shader-program*)
 
-  (shader-set-uniform *shader-program* "objectColor" 1.0 0.5 0.31)
-  (shader-set-uniform *shader-program* "lightColor" 1.0 1 1)
+  (shader-set-uniform *shader-program* "material.ambient" 1.0 0.5 0.31)
+  (shader-set-uniform *shader-program* "material.diffuse" 1.0 0.5 0.31)
+  (shader-set-uniform *shader-program* "material.specular" 0.5 0.5 0.5)
+  (shader-set-uniform *shader-program* "material.shininess" 32.0)
 
   (with-vec (x y z) *light-pos*
-    (shader-set-uniform *shader-program* "lightPos" x y z))
+    (shader-set-uniform *shader-program* "light.position" x y z))
+
+  (shader-set-uniform *shader-program* "light.ambient" 0.2 0.2 0.2)
+  (shader-set-uniform *shader-program* "light.diffuse" 0.5 0.5 0.5)
+  (shader-set-uniform *shader-program* "light.specular" 1.0 1 1)
 
   (let ((view (view-matrix *camera*))
 	(projection (mperspective 45 (/ v-width v-height) 0.1 1000)))
