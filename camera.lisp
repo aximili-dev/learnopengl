@@ -10,7 +10,7 @@
     :documentation "Camera pitch in degrees.")
    (yaw
     :initarg :yaw
-    :initform 90.0
+    :initform 270.0
     :documentation "Camera yaw in ccw degrees from positive x.")
    (roll
     :initarg :roll
@@ -19,7 +19,7 @@
    (speed
     :accessor speed
     :initarg :speed
-    :initform 1.0
+    :initform 5.0
     :documentation "Camera speed in \"units\" per second")))
 
 (defmacro with-camera-props ((front right) camera &body body)
@@ -50,19 +50,6 @@ If false, forward moves camera forward at same height")
 (defgeneric handle-keyboard (camera key dt)
   (:documentation "Handles keyboard input."))
 
-(defmethod handle-keyboard ((camera fps-camera) key dt)
-  (with-slots (speed pos) camera
-    (with-camera-props (front right) camera
-      (let* ((distance (* speed dt))
-	     (direction (case key
-			  (:w (vc +vy+ right))
-			  (:a (v- right))
-			  (:s (vc right +vy+))
-			  (:d (v+ right))
-			  (:space +vy+)
-			  (:c (v- +vy+)))))
-	(move camera (v* (vunit direction) distance))))))
-      
 (defgeneric handle-mouse-movement (camera dx dy)
   (:documentation "Handle mouse movement."))
 
@@ -91,6 +78,6 @@ If false, forward moves camera forward at same height")
 			 ((find :s *keys*) (vc right +vy+))
 			 ((find :d *keys*) (v+ right))
 			 ((find :space *keys*) +vy+)
-			 ((find :c *keys*) (v- +vy+)))))
+			 ((find :left-shift *keys*) (v- +vy+)))))
 	(if direction
 	    (move camera (v* (vunit direction) distance)))))))

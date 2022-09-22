@@ -8,43 +8,48 @@
     arr))
 
 (defparameter *vertices*
-  ;; Positions      Colors         Tex coords
-  #(-0.5 -0.5 -0.5  0.0  0.0
-     0.5 -0.5 -0.5  1.0  0.0
-     0.5  0.5 -0.5  1.0  1.0
-     0.5  0.5 -0.5  1.0  1.0
-    -0.5  0.5 -0.5  0.0  1.0
-    -0.5 -0.5 -0.5  0.0  0.0
-    -0.5 -0.5  0.5  0.0  0.0
-     0.5 -0.5  0.5  1.0  0.0
-     0.5  0.5  0.5  1.0  1.0
-     0.5  0.5  0.5  1.0  1.0
-    -0.5  0.5  0.5  0.0  1.0
-    -0.5 -0.5  0.5  0.0  0.0
-    -0.5  0.5  0.5  1.0  0.0
-    -0.5  0.5 -0.5  1.0  1.0
-    -0.5 -0.5 -0.5  0.0  1.0
-    -0.5 -0.5 -0.5  0.0  1.0
-    -0.5 -0.5  0.5  0.0  0.0
-    -0.5  0.5  0.5  1.0  0.0
-     0.5  0.5  0.5  1.0  0.0
-     0.5  0.5 -0.5  1.0  1.0
-     0.5 -0.5 -0.5  0.0  1.0
-     0.5 -0.5 -0.5  0.0  1.0
-     0.5 -0.5  0.5  0.0  0.0
-     0.5  0.5  0.5  1.0  0.0
-    -0.5 -0.5 -0.5  0.0  1.0
-     0.5 -0.5 -0.5  1.0  1.0
-     0.5 -0.5  0.5  1.0  0.0
-     0.5 -0.5  0.5  1.0  0.0
-    -0.5 -0.5  0.5  0.0  0.0
-    -0.5 -0.5 -0.5  0.0  1.0
-    -0.5  0.5 -0.5  0.0  1.0
-     0.5  0.5 -0.5  1.0  1.0
-     0.5  0.5  0.5  1.0  0.0
-     0.5  0.5  0.5  1.0  0.0
-    -0.5  0.5  0.5  0.0  0.0
-    -0.5  0.5 -0.5  0.0  1.0))
+  ;; Positions      Normals        Tex coords
+  #(-0.5 -0.5 -0.5  0.0  0.0 -1.0  0.0  0.0
+     0.5 -0.5 -0.5  0.0  0.0 -1.0  1.0  0.0
+     0.5  0.5 -0.5  0.0  0.0 -1.0  1.0  1.0
+     0.5  0.5 -0.5  0.0  0.0 -1.0  1.0  1.0
+    -0.5  0.5 -0.5  0.0  0.0 -1.0  0.0  1.0
+    -0.5 -0.5 -0.5  0.0  0.0 -1.0  0.0  0.0
+
+    -0.5 -0.5  0.5  0.0  0.0  1.0  0.0  0.0
+     0.5 -0.5  0.5  0.0  0.0  1.0  1.0  0.0
+     0.5  0.5  0.5  0.0  0.0  1.0  1.0  1.0
+     0.5  0.5  0.5  0.0  0.0  1.0  1.0  1.0
+    -0.5  0.5  0.5  0.0  0.0  1.0  0.0  1.0
+    -0.5 -0.5  0.5  0.0  0.0  1.0  0.0  0.0
+
+    -0.5  0.5  0.5 -1.0  0.0  0.0  1.0  0.0
+    -0.5  0.5 -0.5 -1.0  0.0  0.0  1.0  1.0
+    -0.5 -0.5 -0.5 -1.0  0.0  0.0  0.0  1.0
+    -0.5 -0.5 -0.5 -1.0  0.0  0.0  0.0  1.0
+    -0.5 -0.5  0.5 -1.0  0.0  0.0  0.0  0.0
+    -0.5  0.5  0.5 -1.0  0.0  0.0  1.0  0.0
+
+     0.5  0.5  0.5  1.0  0.0  0.0  1.0  0.0
+     0.5  0.5 -0.5  1.0  0.0  0.0  1.0  1.0
+     0.5 -0.5 -0.5  1.0  0.0  0.0  0.0  1.0
+     0.5 -0.5 -0.5  1.0  0.0  0.0  0.0  1.0
+     0.5 -0.5  0.5  1.0  0.0  0.0  0.0  0.0
+     0.5  0.5  0.5  1.0  0.0  0.0  1.0  0.0
+
+    -0.5 -0.5 -0.5  0.0 -1.0  0.0  0.0  1.0
+     0.5 -0.5 -0.5  0.0 -1.0  0.0  1.0  1.0
+     0.5 -0.5  0.5  0.0 -1.0  0.0  1.0  0.0
+     0.5 -0.5  0.5  0.0 -1.0  0.0  1.0  0.0
+    -0.5 -0.5  0.5  0.0 -1.0  0.0  0.0  0.0
+    -0.5 -0.5 -0.5  0.0 -1.0  0.0  0.0  1.0
+
+    -0.5  0.5 -0.5  0.0  1.0  0.0  0.0  1.0
+     0.5  0.5 -0.5  0.0  1.0  0.0  1.0  1.0
+     0.5  0.5  0.5  0.0  1.0  0.0  1.0  0.0
+     0.5  0.5  0.5  0.0  1.0  0.0  1.0  0.0
+    -0.5  0.5  0.5  0.0  1.0  0.0  0.0  0.0
+    -0.5  0.5 -0.5  0.0  1.0  0.0  0.0  1.0))
 
 (defparameter *indices*
   #( 0  1  2  3  4  5
@@ -74,6 +79,10 @@
 (defparameter *vbo* nil)
 (defparameter *vao* nil)
 (defparameter *ebo* nil)
+
+(defparameter *light-pos* (vec 0 3 0))
+(defparameter *light-shader* nil)
+(defparameter *light-vao* nil)
 
 (defparameter *texture* nil)
 (defparameter *face-texture* nil)
@@ -108,7 +117,6 @@
   (gl:viewport 0 0 width height))
 
 (defun process-input (window key scancode action mod-keys)
-  (format t "~a ~a ~a ~a" key scancode action mod-keys)
   (if (eql action :press)
       (case key
 	(:escape (glfw:set-window-should-close window))
@@ -138,7 +146,7 @@
   "Sets up OpenGL so the engine can work."
   (setf *camera* (make-instance 'fps-camera
 				:sensitivity 0.1
-				:speed 1.0
+				:speed 10.0
 				:pos (vec 0 0 10)))
   
   ;; Load texture
@@ -150,8 +158,12 @@
 	(load-shader-from-disk #P"./shaders/model.vert"
 			       #P"./shaders/model.frag"))
 
-  (shader-set-uniform *shader-program* "texture1" 0)
-  (shader-set-uniform *shader-program* "texture2" 1)
+  (setf *light-shader*
+	(load-shader-from-disk #P"./shaders/model.vert"
+			       #P"./shaders/light.frag"))
+
+  ;(shader-set-uniform *shader-program* "texture1" 0)
+  ;(shader-set-uniform *shader-program* "texture2" 1)
   
   ;; Get VBO buffer
   (setf *vao* (car (gl:gen-vertex-arrays 1)))
@@ -178,14 +190,24 @@
       (gl:free-gl-array arr))
 
   ;; Set vertex attribute pointers
-  (gl:vertex-attrib-pointer 0 3 :float :false (* 5 4) 0)
+  (gl:vertex-attrib-pointer 0 3 :float :false (* 8 4) 0)
   (gl:enable-vertex-attrib-array 0)
 
-  (gl:vertex-attrib-pointer 1 2 :float :false (* 5 4) (* 3 4))
+  (gl:vertex-attrib-pointer 1 3 :float :false (* 8 4) (* 3 4))
+  (gl:enable-vertex-attrib-array 0)
+
+  (gl:vertex-attrib-pointer 2 2 :float :false (* 8 4) (* 6 4))
   (gl:enable-vertex-attrib-array 1)
 
   (gl:bind-buffer :array-buffer 0)
   (gl:bind-vertex-array 0)
+
+  ;; Lights
+  (setf *light-vao* (gl:gen-vertex-array))
+  (gl:bind-vertex-array *light-vao*)
+  (gl:bind-buffer :array-buffer *vbo*)
+  (gl:vertex-attrib-pointer 0 3 :float :false (* 5 4) 0)
+  (gl:enable-vertex-attrib-array 0)
 
   (setf *font* (load-bitmap-font #P"./charmap.png" *viewport-width* *viewport-height*)))
 
@@ -202,7 +224,7 @@
 
 (defun render (v-width v-height)
   "Renders everything."
-  (gl:clear-color 0.3 0.3 0.3 1.0)
+  (gl:clear-color 0.0 0.0 0.0 1.0)
   (gl:clear :color-buffer :depth-buffer)
   
   (gl:active-texture :texture0)
@@ -213,25 +235,52 @@
 
   (shader-use *shader-program*)
 
-  (dotimes (i (length *instance-positions*))
-    (let ((model (meye 4))
-	  (view (view-matrix *camera*))
-	  (projection (mperspective 45 (/ v-width v-height) 0.1 1000)))
-      (nmrotate model (vec (/ 0.5 (+ 0.1 i)) (* i 0.1) 0) (radians (+ 10 (* 10 i (glfw:get-time)))))
-      (nmtranslate model (nth i *instance-positions*))
+  (shader-set-uniform *shader-program* "objectColor" 1.0 0.5 0.31)
+  (shader-set-uniform *shader-program* "lightColor" 1.0 1 1)
 
-      (shader-set-uniform *shader-program* "view" (marr view))
-      (shader-set-uniform *shader-program* "model" (marr model))
-      (shader-set-uniform *shader-program* "projection" (marr projection)))
-  
-    (gl:bind-vertex-array *vao*)
-    (gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*)))
+  (with-vec (x y z) *light-pos*
+    (shader-set-uniform *shader-program* "lightPos" x y z))
 
-  (gl:bind-vertex-array 0))
+  (let ((view (view-matrix *camera*))
+	(projection (mperspective 45 (/ v-width v-height) 0.1 1000)))
 
-(defun render-debug-ui (fps)
+    (with-slots (pos) *camera*
+      (with-vec (x y z) pos
+	(shader-set-uniform *shader-program* "viewPos" x y z)))
+    
+    (shader-set-uniform *shader-program* "view" (marr view))
+    (shader-set-uniform *shader-program* "projection" (marr projection))
+
+    (dotimes (i 10)
+      (let* ((step (/ (* 2 pi) 10))
+	     (model (meye 4))
+	     (scale 3)
+	     (time (/ (get-internal-run-time) internal-time-units-per-second))
+	     (angle (+ (* 2 time) (* step i)))
+	     (i (* scale (sin angle)))
+	     (j (* scale (cos angle))))
+	(nmtranslate model (vec i 0 j))
+	(shader-set-uniform *shader-program* "model" (marr model))
+
+	(gl:bind-vertex-array *vao*)
+	(gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*))))
+
+    (let ((model (meye 4)))
+      (nmtranslate model *light-pos*)
+      (nmscale model (vec 0.2 0.2 0.2))
+
+      (shader-set-uniform *light-shader* "view" (marr view))
+      (shader-set-uniform *light-shader* "projection" (marr projection))
+      (shader-set-uniform *light-shader* "model" (marr model))
+
+      (gl:bind-vertex-array *vao*)
+      (gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*)))
+
+  (gl:bind-vertex-array 0)))
+
+(defun render-debug-ui (fps frame-time time dt)
   "Renders debug info."
-  (render-bmp-text *font* (format nil "FPS: ~3,3f" fps) 1 0 0)
+  (render-bmp-text *font* (format nil "FPS: ~3,3f  TIME: ~3,3f  FT: =3,3f  DT: ~3,3f" fps time frame-time dt) 1 0 0)
 
   (with-slots (pos) *camera*
     (with-camera-props (front right) *camera*
@@ -248,7 +297,9 @@
 				    yaw)
 		     1 0 2))
   (render-bmp-text *font* (format nil "X: ~4d  Y: ~4d" *last-x* *last-y*)
-		   1 0 3))
+		   1 0 3)
+
+  (render-bmp-text *font* (format nil "Keys: ~{~a~^ ~}" *keys*) 1 0 4))
 
 ;;;
 ;;; Main loop
@@ -270,19 +321,21 @@
 		     :cursor-pos #'process-mouse
 		     :cursor-enter #'process-mouse-enter)
 
-    (let ((time          (get-internal-run-time))
+    (let ((time          0.0)
 	  (dt            0.01)
-	  (current-time  (/ (get-internal-run-time) internal-time-units-per-second))
+	  (current-time  (/ (get-internal-real-time) internal-time-units-per-second))
 	  (acc           0.0))
       (setup window)
       
       (loop for frame from 0
 	    until (glfw:window-should-close-p window)
 	    do (progn
-		 (let* ((new-time   (/ (get-internal-run-time) internal-time-units-per-second))
+		 (let* ((new-time   (/ (get-internal-real-time) internal-time-units-per-second))
 			(frame-time (- new-time current-time)))
-		   (if (> frame-time 0.25)
-		       (setf frame-time 0.25))
+		   ;(if (> frame-time 0.25)
+		   ;    (setf frame-time 0.25))
+
+		   (setf current-time new-time)
 		   
 		   (incf acc frame-time)
 
@@ -292,11 +345,14 @@
 			      (incf time dt)
 			      (decf acc dt)))
 
+		   (setf (vy *light-pos*) (* 3 (sin (* current-time 2))))
+
 		   (render *viewport-width* *viewport-height*)
 
-		   (if (> frame-time 0)
-		       (render-debug-ui (/ 1 frame-time))
-		       (render-debug-ui -12.0))
+		   (let ((fps (if (> frame-time 0)
+				  (/ 1 frame-time)
+				  -12.0)))
+		     (render-debug-ui fps frame-time time dt))
 		 
 		   (glfw:swap-buffers window)
 		   (glfw:poll-events))))

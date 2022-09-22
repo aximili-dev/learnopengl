@@ -62,9 +62,9 @@ Use #'gl:get-program and #'gl:get-program-info-log for programs."
 (defmethod shader-set-uniform ((shader shader) location &rest vector)
   "Sets a uniform in a shader program. Changes the active shader."
   (with-slots ((program-id program)) shader
-    (let ((location (gl:get-uniform-location program-id location))
+    (let ((location-nr (gl:get-uniform-location program-id location))
 	  (first (car vector)))
-      (if (eql location -1)
+      (if (eql location-nr -1)
 	  (error "Couldn't find location ~a in program ~d" location program-id))
       (let ((func (cond ((typep first 'integer) #'gl:uniformi)
 			((typep first 'real)    #'gl:uniformf)
@@ -72,7 +72,7 @@ Use #'gl:get-program and #'gl:get-program-info-log for programs."
 			((typep first 'array)   #'gl:uniform-matrix-4fv)
 			(t (error "Unrecognized type in vector")))))
 	(gl:use-program program-id)
-	(apply func location vector)))))
+	(apply func location-nr vector)))))
 
 (defmethod shader-get-logs ((shader shader) stream)
   (with-slots (vs fs) shader
