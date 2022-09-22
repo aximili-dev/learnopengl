@@ -85,7 +85,7 @@
 (defparameter *light-vao* nil)
 
 (defparameter *texture* nil)
-(defparameter *face-texture* nil)
+(defparameter *texture-spec* nil)
 
 (defparameter *font* nil)
 
@@ -151,7 +151,7 @@
   
   ;; Load texture
   (setf *texture* (load-texture #P"./container.png"))
-  (setf *face-texture* (load-texture #P"./awesomeface.png"))
+  (setf *texture-spec* (load-texture #P"./container.specular.png"))
 
   ;;Set shader program
   (setf *shader-program*
@@ -162,9 +162,9 @@
 	(load-shader-from-disk #P"./shaders/model.vert"
 			       #P"./shaders/light.frag"))
 
-  ;(shader-set-uniform *shader-program* "texture1" 0)
-  ;(shader-set-uniform *shader-program* "texture2" 1)
-  
+  (shader-set-uniform *shader-program* "material.diffuse" 0)
+  (shader-set-uniform *shader-program* "material.specular" 1)
+
   ;; Get VBO buffer
   (setf *vao* (car (gl:gen-vertex-arrays 1)))
   (setf *vbo* (car (gl:gen-buffers 1)))
@@ -194,10 +194,10 @@
   (gl:enable-vertex-attrib-array 0)
 
   (gl:vertex-attrib-pointer 1 3 :float :false (* 8 4) (* 3 4))
-  (gl:enable-vertex-attrib-array 0)
+  (gl:enable-vertex-attrib-array 1)
 
   (gl:vertex-attrib-pointer 2 2 :float :false (* 8 4) (* 6 4))
-  (gl:enable-vertex-attrib-array 1)
+  (gl:enable-vertex-attrib-array 2)
 
   (gl:bind-buffer :array-buffer 0)
   (gl:bind-vertex-array 0)
@@ -217,7 +217,6 @@
   (gl:delete-vertex-arrays (list *vao*))
   (gl:delete-buffers (list *vbo*))
   (gl:delete-buffers (list *ebo*))
-  (gl:delete-textures (list *texture* *face-texture*))
 
   (shader-free *shader-program*)
   (unload-bitmap-font *font*))
@@ -227,18 +226,17 @@
   (gl:clear-color 0.0 0.0 0.0 1.0)
   (gl:clear :color-buffer :depth-buffer)
   
-  (gl:active-texture :texture0)
+  (gl:active-texture 0)
   (gl:bind-texture :texture-2d *texture*)
 
-  (gl:active-texture :texture1)
-  (gl:bind-texture :texture-2d *face-texture*)
+  (gl:active-texture 1)
+  (gl:bind-texture :texture-2d *texture-spec*)
 
   (shader-use *shader-program*)
 
-  (shader-set-uniform *shader-program* "material.ambient" 1.0 0.5 0.31)
-  (shader-set-uniform *shader-program* "material.diffuse" 1.0 0.5 0.31)
-  (shader-set-uniform *shader-program* "material.specular" 0.5 0.5 0.5)
   (shader-set-uniform *shader-program* "material.shininess" 32.0)
+  (shader-set-uniform *shader-program* "material.diffuse" 0)
+  (shader-set-uniform *shader-program* "material.specular" 1)
 
   (with-vec (x y z) *light-pos*
     (shader-set-uniform *shader-program* "light.position" x y z))
@@ -258,7 +256,7 @@
     (shader-set-uniform *shader-program* "projection" (marr projection))
 
     (dotimes (i 10)
-      (let* ((step (/ (* 2 pi) 10))
+      (let* ((step (/ 360 10))
 	     (model (meye 4))
 	     (scale 3)
 	     (time (/ (get-internal-run-time) internal-time-units-per-second))
@@ -286,7 +284,7 @@
 
 (defun render-debug-ui (fps frame-time time dt)
   "Renders debug info."
-  (render-bmp-text *font* (format nil "FPS: ~3,3f  TIME: ~3,3f  FT: =3,3f  DT: ~3,3f" fps time frame-time dt) 1 0 0)
+  (render-bmp-text *font* (format nil "FPS: ~3,3f  TIME: ~3,3f  FT: ~3,3f  DT: ~3,3f" fps time frame-time dt) 1 0 0)
 
   (with-slots (pos) *camera*
     (with-camera-props (front right) *camera*
