@@ -71,6 +71,12 @@
 	(vec  1.5  0.2 -1.5)
 	(vec -1.3  1.0 -1.5)))
 
+(defparameter *point-light-positions*
+  (list (vec  0.7  0.2  2.0)
+	(vec  2.3 -3.3 -4.0)
+	(vec -4.0  2.0 -12.0)
+	(vec  0.0  0.0 -3.0)))
+
 (defparameter *shader-program* nil)
 
 (defparameter *viewport-width* 800)
@@ -238,12 +244,25 @@
   (shader-set-uniform *shader-program* "material.diffuse" 0)
   (shader-set-uniform *shader-program* "material.specular" 1)
 
-  (with-vec (x y z) *light-pos*
-    (shader-set-uniform *shader-program* "light.position" x y z))
+  (shader-set-uniform *shader-program* "dirLight.direction" 1.0 -1 1)
+  (shader-set-uniform *shader-program* "dirLight.ambient" 0.2 0.2 0.2)
+  (shader-set-uniform *shader-program* "dirLight.diffuse" 0.5 0.5 0.5)
+  (shader-set-uniform *shader-program* "dirLight.specular" 1.0 1.0 1.0)
 
-  (shader-set-uniform *shader-program* "light.ambient" 0.2 0.2 0.2)
-  (shader-set-uniform *shader-program* "light.diffuse" 0.5 0.5 0.5)
-  (shader-set-uniform *shader-program* "light.specular" 1.0 1 1)
+  (let ((i 0))
+    (macrolet ((set-light-prop (i prop &rest values)
+		 `(let ((loc (format nil "pointLights[~d].~a" ,i ,prop)))
+		    (shader-set-uniform *shader-program* loc ,@values))))
+      (dolist (light-pos *point-light-positions*)
+	(with-vec (x y z) light-pos
+	  (set-light-prop i "position" x y z)
+	  (set-light-prop i "constant" 1.0)
+	  (set-light-prop i "linear" 0.09)
+	  (set-light-prop i "quadratic" 0.032)
+	  (set-light-prop i "ambient" 0.2 0.2 0.2)
+	  (set-light-prop i "diffuse" 0.5 0.5 0.5)
+	  (set-light-prop i "specular" 1.0 1.0 1.0))
+	(incf i))))
 
   (let ((view (view-matrix *camera*))
 	(projection (mperspective 45 (/ v-width v-height) 0.1 1000)))
@@ -269,16 +288,17 @@
 	(gl:bind-vertex-array *vao*)
 	(gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*))))
 
-    (let ((model (meye 4)))
-      (nmtranslate model *light-pos*)
-      (nmscale model (vec 0.2 0.2 0.2))
+    (dolist (light-pos *point-light-positions*)
+      (let ((model (meye 4)))
+	(nmtranslate model light-pos)
+	(nmscale model (vec 0.2 0.2 0.2))
 
-      (shader-set-uniform *light-shader* "view" (marr view))
-      (shader-set-uniform *light-shader* "projection" (marr projection))
-      (shader-set-uniform *light-shader* "model" (marr model))
+	(shader-set-uniform *light-shader* "view" (marr view))
+	(shader-set-uniform *light-shader* "projection" (marr projection))
+	(shader-set-uniform *light-shader* "model" (marr model))
 
-      (gl:bind-vertex-array *vao*)
-      (gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*)))
+	(gl:bind-vertex-array *vao*)
+	(gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*))))
 
   (gl:bind-vertex-array 0)))
 
