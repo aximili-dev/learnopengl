@@ -1,4 +1,4 @@
-asdf:defsystem :game-engine
+(asdf:defsystem :game-engine
   :description "Game engine"
   :version "0.1.0"
   :author "Daniel Litvak"
@@ -19,7 +19,7 @@ asdf:defsystem :game-engine
 	       (:file "opengl")
 	       (:file "perlin")
 	       (:file "shader")
-	       (:file "simplex")
+	       ;(:file "simplex")
 	       (:file "text-bitmap")
 	       (:file "texture")
 	       (:file "util")))
