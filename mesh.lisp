@@ -21,7 +21,9 @@
   ((id
     :initarg :id)
    (type
-    :initarg :type)))
+    :initarg :type)
+   (path
+    :initarg :path)))
 
 (defclass mesh ()
   ((vertices
@@ -75,7 +77,7 @@
 		   :vbo vbo
 		   :ebo ebo)))
 		      
-(defmethod draw-mesh ((mesh mesh) shader)
+(defmethod render-mesh ((mesh mesh) shader)
   (with-slots (indices textures vao) mesh
     (loop with diffuse-nr = 0
 	  with specular-nr = 0

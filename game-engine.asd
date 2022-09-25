@@ -1,20 +1,25 @@
-(asdf:defsystem :game-engine
+asdf:defsystem :game-engine
   :description "Game engine"
   :version "0.1.0"
   :author "Daniel Litvak"
   :license "GPLv3"
   :depends-on (:3d-matrices
 	       :3d-vectors
-	       :cl-opengl
 	       :cl-glfw3
+	       :cl-opengl
+	       :classimp
 	       :pngload)
   :components ((:file "packages")
 	       (:file "camera")
 	       (:file "glfw")
 	       (:file "io")
-	       ;(:file "mesh")
+	       ;(:file "mc")
+	       (:file "mesh")
+	       ;(:file "model")
 	       (:file "opengl")
+	       (:file "perlin")
 	       (:file "shader")
+	       (:file "simplex")
 	       (:file "text-bitmap")
 	       (:file "texture")
 	       (:file "util")))
