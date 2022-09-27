@@ -44,7 +44,7 @@
      (let ((,window (glfw:create-window :width ,width
 					:height ,height
 					:title ,title
-					:context-version-major 3
+					:context-version-major 4
 					:context-version-minor 3
 					:opengl-profile :opengl-core-profile)))
 

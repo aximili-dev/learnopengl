@@ -229,14 +229,14 @@
 
 (defun render (v-width v-height)
   "Renders everything."
-  (gl:clear-color 0.0 0.0 0.0 1.0)
+  (gl:clear-color 0.21 0.36 0.43 1.0)
   (gl:clear :color-buffer :depth-buffer)
   
   (gl:active-texture 0)
-  (gl:bind-texture :texture-2d *texture*)
+  (gl:bind-texture :texture-2d (texture-id *texture*))
 
   (gl:active-texture 1)
-  (gl:bind-texture :texture-2d *texture-spec*)
+  (gl:bind-texture :texture-2d (texture-id *texture-spec*))
 
   (shader-use *shader-program*)
 

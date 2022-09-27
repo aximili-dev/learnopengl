@@ -17,6 +17,12 @@
 		nx ny nz
 		tx ty))))))
 
+(defun vertex (position normal tex-coords)
+  (make-instance 'vertex
+		 :position position
+		 :normal normal
+		 :tex-coords tex-coords))
+
 (defclass texture ()
   ((id
     :initarg :id)
