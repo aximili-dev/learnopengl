@@ -5,6 +5,7 @@
   :license "GPLv3"
   :depends-on (:3d-matrices
 	       :3d-vectors
+	       :city-hash
 	       :cl-glfw3
 	       :cl-opengl
 	       :classimp

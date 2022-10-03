@@ -33,24 +33,16 @@
 (defun trunc-u32 (i)
   (logand i #xFFFFFFFF))
 
-(defun random-gradient (ix iy)
-    (let* ((w (* 8 4))
-	   (s (/ w 2))
-	   (a ix)
-	   (b iy))
-      (setf a (trunc-u32 (* a 3284157443)))
-      (setf b (trunc-u32 (logxor b (logior (ash a s)
-				   (ash a (- s w))))))
-
-      (setf b (trunc-u32 (* b 1911520717)))
-      (setf a (trunc-u32 (logxor a (logior (ash b s)
-				   (ash b (- s w))))))
-
-      (setf a (trunc-u32 (* a 2048419325)))
-
-      (let ((rand (* a (/ pi (lognot #x7FFFFFFF)))))
-	(vec (cos rand)
-	     (sin rand)))))
+(defun random-gradient (ix iy &optional (seed 0))
+  (let ((octets (make-array 24 :element-type '(unsigned-byte 8))))
+    (loop for i from 0 below 8
+	  do (progn
+	       (setf (aref octets (+ (* i 3) 0)) (ldb (byte 8 (* i 8)) ix))
+	       (setf (aref octets (+ (* i 3) 1)) (ldb (byte 8 (* i 8)) iy))
+	       (setf (aref octets (+ (* i 3) 2)) (ldb (byte 8 (* i 8)) seed))))
+    (let ((hash (mod (city-hash:city-hash-32 octets) 36500)))
+      (vec (cos (radians (/ hash 100)))
+	   (sin (radians (/ hash 100)))))))
 
 (defun dot-grid-gradient (ix iy x y)
   (let ((gradient (random-gradient ix iy))
@@ -60,7 +52,7 @@
        (* dy (vy gradient)))))
 
 ;;; FIXME: Doesn't work. Either this function or the above ones
-(defun perlin (x y)
+(defun perlin (x y &optional (seed 0))
   (let* ((x0 (floor x))
 	 (x1 (1+ x0))
 	 (y0 (floor y))
