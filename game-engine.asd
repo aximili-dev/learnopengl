@@ -12,6 +12,7 @@
 	       :pngload)
   :components ((:file "packages")
 	       (:file "camera")
+	       ;(:file "ecs")
 	       (:file "glfw")
 	       (:file "io")
 	       ;(:file "mc")

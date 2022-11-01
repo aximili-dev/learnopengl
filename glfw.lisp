@@ -45,7 +45,7 @@
 					:height ,height
 					:title ,title
 					:context-version-major 4
-					:context-version-minor 3
+					:context-version-minor 5
 					:opengl-profile :opengl-core-profile)))
 
        ,(if hide-cursor
