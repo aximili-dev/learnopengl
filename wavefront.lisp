@@ -1,0 +1,43 @@
+(in-package :game-engine)
+
+(defun parse-line (line)
+  (cond ((cl-ppcre:scan "v " line) (parse-vertex line))
+	((cl-ppcre:scan "vt" line) (parse-tex-coord line))
+	((cl-ppcre:scan "vn" line) (parse-vertex-normal line))
+	((cl-ppcre:scan "f " line) (parse-face line))))
+
+(defun parse-vertex (line vertices)
+  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "v ([\\d.]+) ([\\d.]+) ([\\d.]+)")
+    (let ((x (aref matches 0))
+	  (y (aref matches 1))
+	  (z (aref matches 2)))
+      (push vertices (vec x y z)))))
+      
+(defun parse-tex-coord (line tex-coords)
+  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "vt ([\\d.]+) ([\\d.]+)")
+    (let ((u (aref matches 0))
+	  (v (aref matches 1)))
+      (push tex-coords (vec u v)))))
+
+(defun parse-vertex-normal (line normals)
+  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "vn ([\\d.]+) ([\\d.]+) ([\\d.]+)")
+    (let ((x (aref matches 0))
+	  (y (aref matches 1))
+	  (z (aref matches 2)))
+      (push normals (vec x y z)))))
+
+(defun parse-face (line mesh-vertices vertex-coords tex-coords normals)
+  d)
+
+(defun parse-vec2 (line)
+  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "([\\d.]+) ([\\d.]+)")
+    (let ((x (aref matches 0))
+	  (y (aref matches 1)))
+      (vec x y))))
+
+(defun parse-vec3 (line)
+  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "([\\d.]+) ([\\d.]+) ([\\d.]+)")
+    (let ((x (aref matches 0))
+	  (y (aref matches 1))
+	  (z (aref matches 2)))
+      (vec x y z))))

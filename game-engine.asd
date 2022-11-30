@@ -8,6 +8,7 @@
 	       :city-hash
 	       :cl-glfw3
 	       :cl-opengl
+	       :cl-ppcre
 	       :classimp
 	       :pngload)
   :components ((:file "packages")
@@ -24,7 +25,8 @@
 	       ;(:file "simplex")
 	       (:file "text-bitmap")
 	       (:file "texture")
-	       (:file "util")))
+	       (:file "util")
+	       (:file "wavefront")))
 
 #+sb-core-compression
 (defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
