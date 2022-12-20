@@ -145,6 +145,8 @@
   (if entered
       (setf *mouse-just-entered* t)))
 
+(defparameter *world* nil)
+
 ;;;
 ;;; OpenGL code
 ;;;

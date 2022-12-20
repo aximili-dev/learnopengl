@@ -1,43 +1,102 @@
 (in-package :game-engine)
 
-(defun parse-line (line)
-  (cond ((cl-ppcre:scan "v " line) (parse-vertex line))
-	((cl-ppcre:scan "vt" line) (parse-tex-coord line))
-	((cl-ppcre:scan "vn" line) (parse-vertex-normal line))
-	((cl-ppcre:scan "f " line) (parse-face line))))
+(defun parse-obj (input-path)
+  "Parses a Wavefront OBJ file and returns a model"
+  (let ((vertex-hash-table (make-hash-table :test 'equalp))
+	(vertices (make-array 0 :adjustable t :fill-pointer 0))
+	(indices (make-array 0 :adjustable t :fill-pointer 0))
+	(faces
+	  (with-open-file (in input-path :direction :input)
+	    (loop for line = (read-line in nil)
+		  while line
+		  for type = (subseq line 0 2)
+		  
+		  if (string= type "v ")
+		    collect (parse-vertex line)
+		      into vertices
+	  
+		  if (string= type "vt")
+		    collect (parse-tex-coord line)
+		      into tex-coords
+	  
+		  if (string= type "vn")
+		    collect (parse-vertex-normal line)
+		      into normals
 
-(defun parse-vertex (line vertices)
-  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "v ([\\d.]+) ([\\d.]+) ([\\d.]+)")
-    (let ((x (aref matches 0))
-	  (y (aref matches 1))
-	  (z (aref matches 2)))
-      (push vertices (vec x y z)))))
-      
-(defun parse-tex-coord (line tex-coords)
-  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "vt ([\\d.]+) ([\\d.]+)")
-    (let ((u (aref matches 0))
-	  (v (aref matches 1)))
-      (push tex-coords (vec u v)))))
+		  if (string= type "f ")
+		    collect (parse-face line vertices tex-coords normals)))))
 
-(defun parse-vertex-normal (line normals)
-  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "vn ([\\d.]+) ([\\d.]+) ([\\d.]+)")
-    (let ((x (aref matches 0))
-	  (y (aref matches 1))
-	  (z (aref matches 2)))
-      (push normals (vec x y z)))))
+    (loop for face in faces
+	  do (loop for vertex in face
+		   do (if (gethash vertex vertex-hash-table)
+			  (vector-push-extend (gethash vertex vertex-hash-table) indices)
+			  (progn
+			    (setf (gethash vertex vertex-hash-table) (length vertices))
+			    (vector-push-extend (length vertices) indices)
+			    (vector-push-extend vertex vertices)))))
 
-(defun parse-face (line mesh-vertices vertex-coords tex-coords normals)
-  d)
+    (values vertices indices)))
+				  
+	  
+(defun parse-vertex (line)
+  "Parses a vertex line and returns a vector with x, y and z coordinates"
+  (let ((coords (cl-ppcre:split " " (subseq line 2))))
+    (vec (parse-float:parse-float (first coords))
+	 (parse-float:parse-float (second coords))
+	 (parse-float:parse-float (third coords)))))
 
-(defun parse-vec2 (line)
-  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "([\\d.]+) ([\\d.]+)")
-    (let ((x (aref matches 0))
-	  (y (aref matches 1)))
-      (vec x y))))
+(defun parse-tex-coord (line)
+  "Parses a vertex texture coordinate line and returns a vector with x and y coordinates"
+  (let ((coords (cl-ppcre:split " " (subseq line 3))))
+    (vec (parse-float:parse-float (first coords))
+	 (parse-float:parse-float (second coords)))))
 
-(defun parse-vec3 (line)
-  (multiple-value-bind (_ matches) (cl-ppcre:scan-to-strings "([\\d.]+) ([\\d.]+) ([\\d.]+)")
-    (let ((x (aref matches 0))
-	  (y (aref matches 1))
-	  (z (aref matches 2)))
-      (vec x y z))))
+(defun parse-vertex-normal (line)
+  "Parses a vertex normal line and returns a vector with x, y and z coordinates"
+  (let ((coords (cl-ppcre:split " " (subseq line 3))))
+    (vec (parse-float:parse-float (first coords))
+	 (parse-float:parse-float (second coords))
+	 (parse-float:parse-float (third coords)))))
+
+(defun parse-face (line vertices tex-coords normals)
+  (let ((indices (cl-ppcre:split " " (subseq line 2))))
+    (cond
+      ((cl-ppcre:scan "^\\d+$" (first indices)) (parse-face-v indices vertices))
+      ((cl-ppcre:scan "^\\d+\\/\\d+$" (first indices)) (parse-face-vt indices vertices tex-coords))
+      ((cl-ppcre:scan "^\\d+\\/\\d+\\/\\d+$" (first indices)) (parse-face-vtn indices vertices tex-coords normals))
+      ((cl-ppcre:scan "^\\d+\\/\\/\\d+$" (first indices)) (parse-face-vn indices vertices normals)))))
+
+(defun parse-face-v (indices vertices)
+  (mapcar #'(lambda (index)
+	      (make-vertex
+	       :position (nth (parse-integer index) vertices)
+	       :tex-coords (vec 0 0)
+	       :normal (vec 0 0 0)))
+	  indices))
+  
+(defun parse-face-vt (indices vertices tex-coords)
+  (mapcar #'(lambda (vt-indices)
+	      (cl-ppcre:register-groups-bind ((#'parse-integer v vt)) ("(\\d+)\\/(\\d+)" vt-indices)
+		(make-vertex
+		 :position (nth v vertices)
+		 :tex-coords (nth vt tex-coords)
+		 :normal (vec 0 0 0))))
+	  indices))
+
+(defun parse-face-vtn (indices vertices tex-coords normals)
+  (mapcar #'(lambda (vtn-indices)
+	      (cl-ppcre:register-groups-bind ((#'parse-integer v vt vn)) ("(\\d+)\\/(\\d+)\\/(\\d+)" vtn-indices)
+		(make-vertex
+		 :position (nth v vertices)
+		 :tex-coords (nth vt tex-coords)
+		 :normal (nth vn normals))))
+	  indices))
+
+(defun parse-face-vn (indices vertices normals)
+  (mapcar #'(lambda (vn-indices)
+	      (cl-ppcre:register-groups-bind ((#'parse-integer v vn)) ("(\\d+)\\/\\/(\\d+)" vn-indices)
+		(make-vertex
+		 :position (nth v vertices)
+		 :tex-coords nil
+		 :normal (nth vn normals))))
+	  indices))

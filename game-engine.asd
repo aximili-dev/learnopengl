@@ -14,6 +14,7 @@
   :components ((:file "packages")
 	       (:file "camera")
 	       ;(:file "ecs")
+	       (:file "engine")
 	       (:file "glfw")
 	       (:file "io")
 	       ;(:file "mc")
