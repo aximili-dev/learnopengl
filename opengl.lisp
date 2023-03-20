@@ -335,7 +335,7 @@
   (process-tick *camera* time dt))
 
 ;;; Time step algorithm from https://gafferongames.com/post/fix_your_timestep/
-(defun run ()
+(defun run-engine ()
   (with-glfw (window
 	      :width 800
 	      :height 600

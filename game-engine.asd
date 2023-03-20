@@ -4,17 +4,21 @@
   :author "Daniel Litvak"
   :license "GPLv3"
   :depends-on (:3d-matrices
+	       :3d-quaternions
+	       :3d-transforms
 	       :3d-vectors
 	       :city-hash
 	       :cl-glfw3
 	       :cl-opengl
 	       :cl-ppcre
 	       :classimp
-	       :pngload)
+	       :pngload
+	       :fiveam)
   :components ((:file "packages")
 	       (:file "camera")
 	       ;(:file "ecs")
 	       (:file "engine")
+	       ;(:file "entity")
 	       (:file "glfw")
 	       (:file "io")
 	       ;(:file "mc")
