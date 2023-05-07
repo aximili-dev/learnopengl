@@ -6,7 +6,11 @@
    :3d-vectors
    :fiveam)
   (:export
-   :parse-vertex))
+   :parse-obj
+   :with-vertex
+   :vertex-position
+   :vertex-normal
+   :vertex-tex-coords))
 
 (defpackage :game-engine
   (:use

@@ -59,6 +59,8 @@
     24 25 26 27 28 29
     30 31 32 33 34 35))
 
+(defparameter *mesh* nil)
+
 (defparameter *instance-positions*
   (list (vec  0    0    0)
 	(vec  2    5   -15)
@@ -110,6 +112,13 @@
 
 (defparameter *keys* '())
 
+(defparameter *model* '())
+(defparameter *entity* '())
+
+(defparameter *d20-mesh* '())
+(defparameter *d20-model* '())
+(defparameter *d20-entity* '())
+
 ;;;
 ;;; GLFW Callbacks
 ;;;
@@ -156,7 +165,7 @@
 				:sensitivity 0.1
 				:speed 10.0
 				:pos (vec 0 0 10)))
-  
+
   ;; Load texture
   (setf *texture* (load-texture #P"./container.png"))
   (setf *texture-spec* (load-texture #P"./container.specular.png"))
@@ -217,7 +226,27 @@
   (gl:vertex-attrib-pointer 0 3 :float :false (* 5 4) 0)
   (gl:enable-vertex-attrib-array 0)
 
-  (setf *font* (load-bitmap-font #P"./charmap.png" *viewport-width* *viewport-height*)))
+  (setf *font* (load-bitmap-font #P"./charmap.png" *viewport-width* *viewport-height*))
+
+  (setf *model* (load-model #P"./models/cube.obj"
+			    :diffuse-path #P"./container.png"
+			    :specular-path #P"./container.specular.png"))
+
+  (setf *entity* (make-instance 'entity
+				:model *model*
+				:shader *shader-program*
+				:transform (transform (vec 0 0 0)
+						      (vec 1 1 1))))
+
+  (setf *d20-model (load-model #P"./models/d20.obj"
+			       :diffuse-path #P"./D20.png"
+			       :specular-path #P"./D20.png"))
+
+  (setf *d20-entity* (make-instance 'entity
+				    :model *model*
+				    :shader *shader-program*
+				    :transform (transform (vec 4 1 4)
+							  (vec 3 3 3)))))
 
 (defun cleanup ()
   "Cleans up OpenGL."
@@ -227,7 +256,9 @@
   (gl:delete-buffers (list *ebo*))
 
   (shader-free *shader-program*)
-  (unload-bitmap-font *font*))
+  (unload-bitmap-font *font*)
+
+  (free-model *model*))
 
 (defun render (v-width v-height)
   "Renders everything."
@@ -302,7 +333,10 @@
 	(gl:bind-vertex-array *vao*)
 	(gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*))))
 
-  (gl:bind-vertex-array 0)))
+    (gl:bind-vertex-array 0))
+
+  (render-entity *entity* v-width v-height *camera*)
+  (render-entity *d20-entity* v-width v-height *camera*))
 
 (defun render-debug-ui (fps frame-time time dt)
   "Renders debug info."

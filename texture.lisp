@@ -45,4 +45,7 @@
 		   :id texture-id
 		   :width width
 		   :height height)))
+
+(defmethod free-texture ((texture texture))
+  (gl:delete-texture (texture-id texture)))
 		     

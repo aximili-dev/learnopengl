@@ -5,6 +5,12 @@
   tex-coords
   normal)
 
+(defmacro with-vertex ((position normal tex-coords) vertex &body body)
+  `(let ((,position (vertex-position ,vertex))
+	 (,tex-coords (vertex-tex-coords ,vertex))
+	 (,normal (vertex-normal ,vertex)))
+     ,@body))
+
 (defun parse-obj (input-path)
   "Parses a Wavefront OBJ file and returns a mesh by its vertices and indices"
   (let ((vertex-hash-table (make-hash-table :test 'equalp))
@@ -81,7 +87,7 @@
   "Make a face using only vertex positions"
   (mapcar #'(lambda (index)
 	      (make-vertex
-	       :position (vcopy (nth index vertices))
+	       :position (vcopy (nth (1- index) vertices))
 	       :tex-coords (vec 0 0)
 	       :normal (vec 0 0 0)))
 	  indices))
@@ -90,8 +96,8 @@
   (mapcar #'(lambda (vt-indices)
 	      (cl-ppcre:register-groups-bind ((#'parse-integer v vt)) ("(\\d+)\\/(\\d+)" vt-indices)
 		(make-vertex
-		 :position (nth v vertices)
-		 :tex-coords (nth vt tex-coords)
+		 :position (nth (1- v) vertices)
+		 :tex-coords (nth (1- vt) tex-coords)
 		 :normal (vec 0 0 0))))
 	  indices))
 
@@ -99,18 +105,18 @@
   (mapcar #'(lambda (vtn-indices)
 	      (cl-ppcre:register-groups-bind ((#'parse-integer v vt vn)) ("(\\d+)\\/(\\d+)\\/(\\d+)" vtn-indices)
 		(make-vertex
-		 :position (nth v vertices)
-		 :tex-coords (nth vt tex-coords)
-		 :normal (nth vn normals))))
+		 :position (nth (1- v) vertices)
+		 :tex-coords (nth (1- vt) tex-coords)
+		 :normal (nth (1- vn) normals))))
 	  indices))
 
 (defun parse-face-vn (indices vertices normals)
   (mapcar #'(lambda (vn-indices)
 	      (cl-ppcre:register-groups-bind ((#'parse-integer v vn)) ("(\\d+)\\/\\/(\\d+)" vn-indices)
 		(make-vertex
-		 :position (nth v vertices)
+		 :position (nth (1- v) vertices)
 		 :tex-coords (vec 0 0)
-		 :normal (nth vn normals))))
+		 :normal (nth (1- vn) normals))))
 	  indices))
 
 ;; Unit tests
