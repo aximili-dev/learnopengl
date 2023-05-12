@@ -32,10 +32,8 @@
   (with-slots (mesh diffuse-texture specular-texture) model
     (when diffuse-location
       (gl:active-texture 0)
-      (gl:bind-texture :texture-2d (texture-id diffuse-texture))
-      (shader-set-uniform shader diffuse-location (texture-id diffuse-texture)))
+      (gl:bind-texture :texture-2d (texture-id diffuse-texture)))
     (when specular-location
       (gl:active-texture 1)
-      (gl:bind-texture :texture-2d (texture-id specular-texture))
-      (shader-set-uniform shader specular-location (texture-id specular-texture)))
+      (gl:bind-texture :texture-2d (texture-id specular-texture)))
     (render-mesh mesh)))

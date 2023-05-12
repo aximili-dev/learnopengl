@@ -167,8 +167,8 @@
 				:pos (vec 0 0 10)))
 
   ;; Load texture
-  (setf *texture* (load-texture #P"./container.png"))
-  (setf *texture-spec* (load-texture #P"./container.specular.png"))
+;;  (setf *texture* (load-texture #P"./container.png"))
+;;  (setf *texture-spec* (load-texture #P"./container.specular.png"))
 
   ;;Set shader program
   (setf *shader-program*
@@ -179,52 +179,52 @@
 	(load-shader-from-disk #P"./shaders/model.vert"
 			       #P"./shaders/light.frag"))
 
-  (shader-set-uniform *shader-program* "material.diffuse" 0)
-  (shader-set-uniform *shader-program* "material.specular" 1)
+;;  (shader-set-uniform *shader-program* "material.diffuse" 0)
+;;  (shader-set-uniform *shader-program* "material.specular" 1)
 
   ;; Get VBO buffer
-  (setf *vao* (car (gl:gen-vertex-arrays 1)))
-  (setf *vbo* (car (gl:gen-buffers 1)))
-  (setf *ebo* (car (gl:gen-buffers 1)))
+;;  (setf *vao* (car (gl:gen-vertex-arrays 1)))
+;;  (setf *vbo* (car (gl:gen-buffers 1)))
+;;  (setf *ebo* (car (gl:gen-buffers 1)))
 
   ;; Bind VAO
-  (gl:bind-vertex-array *vao*)
+;;  (gl:bind-vertex-array *vao*)
 
   ;; Copy vertices into buffer
-  (gl:bind-buffer :array-buffer *vbo*)
-  (let ((arr (make-gl-array *vertices* :float)))
-    (gl:buffer-data :array-buffer
-		    :static-draw
-		    arr)
-    (gl:free-gl-array arr))
+;;  (gl:bind-buffer :array-buffer *vbo*)
+;;  (let ((arr (make-gl-array *vertices* :float)))
+;;    (gl:buffer-data :array-buffer
+;;		    :static-draw
+;;		    arr)
+;;    (gl:free-gl-array arr))
 
   ;; Copy indices into buffer
-  (gl:bind-buffer :element-array-buffer *ebo*)
-  (let ((arr (make-gl-array *indices* :unsigned-int)))
-      (gl:buffer-data :element-array-buffer
-		      :static-draw
-		      arr)
-      (gl:free-gl-array arr))
+;;  (gl:bind-buffer :element-array-buffer *ebo*)
+;;  (let ((arr (make-gl-array *indices* :unsigned-int)))
+;;      (gl:buffer-data :element-array-buffer
+;;		      :static-draw
+;;		      arr)
+;;      (gl:free-gl-array arr))
 
   ;; Set vertex attribute pointers
-  (gl:vertex-attrib-pointer 0 3 :float :false (* 8 4) 0)
-  (gl:enable-vertex-attrib-array 0)
+;;  (gl:vertex-attrib-pointer 0 3 :float :false (* 8 4) 0)
+;;  (gl:enable-vertex-attrib-array 0)
 
-  (gl:vertex-attrib-pointer 1 3 :float :false (* 8 4) (* 3 4))
-  (gl:enable-vertex-attrib-array 1)
+;;  (gl:vertex-attrib-pointer 1 3 :float :false (* 8 4) (* 3 4))
+;;  (gl:enable-vertex-attrib-array 1)
 
-  (gl:vertex-attrib-pointer 2 2 :float :false (* 8 4) (* 6 4))
-  (gl:enable-vertex-attrib-array 2)
+;;  (gl:vertex-attrib-pointer 2 2 :float :false (* 8 4) (* 6 4))
+;;  (gl:enable-vertex-attrib-array 2)
 
-  (gl:bind-buffer :array-buffer 0)
-  (gl:bind-vertex-array 0)
+;;  (gl:bind-buffer :array-buffer 0)
+;;  (gl:bind-vertex-array 0)
 
   ;; Lights
-  (setf *light-vao* (gl:gen-vertex-array))
-  (gl:bind-vertex-array *light-vao*)
-  (gl:bind-buffer :array-buffer *vbo*)
-  (gl:vertex-attrib-pointer 0 3 :float :false (* 5 4) 0)
-  (gl:enable-vertex-attrib-array 0)
+;;  (setf *light-vao* (gl:gen-vertex-array))
+;;  (gl:bind-vertex-array *light-vao*)
+;;  (gl:bind-buffer :array-buffer *vbo*)
+;;  (gl:vertex-attrib-pointer 0 3 :float :false (* 5 4) 0)
+;;  (gl:enable-vertex-attrib-array 0)
 
   (setf *font* (load-bitmap-font #P"./charmap.png" *viewport-width* *viewport-height*))
 
@@ -238,12 +238,12 @@
 				:transform (transform (vec 0 0 0)
 						      (vec 1 1 1))))
 
-  (setf *d20-model (load-model #P"./models/d20.obj"
+  (setf *d20-model* (load-model #P"./models/d20.obj"
 			       :diffuse-path #P"./D20.png"
 			       :specular-path #P"./D20.png"))
 
   (setf *d20-entity* (make-instance 'entity
-				    :model *model*
+				    :model *d20-model*
 				    :shader *shader-program*
 				    :transform (transform (vec 4 1 4)
 							  (vec 3 3 3)))))
@@ -251,9 +251,9 @@
 (defun cleanup ()
   "Cleans up OpenGL."
   (format t "DEBUG: Cleaning up~%")
-  (gl:delete-vertex-arrays (list *vao*))
-  (gl:delete-buffers (list *vbo*))
-  (gl:delete-buffers (list *ebo*))
+;;  (gl:delete-vertex-arrays (list *vao*))
+;;  (gl:delete-buffers (list *vbo*))
+;;  (gl:delete-buffers (list *ebo*))
 
   (shader-free *shader-program*)
   (unload-bitmap-font *font*)
@@ -265,22 +265,22 @@
   (gl:clear-color 0.21 0.36 0.43 1.0)
   (gl:clear :color-buffer :depth-buffer)
   
-  (gl:active-texture 0)
-  (gl:bind-texture :texture-2d (texture-id *texture*))
+;;  (gl:active-texture 0)
+;;  (gl:bind-texture :texture-2d (texture-id *texture*))
 
-  (gl:active-texture 1)
-  (gl:bind-texture :texture-2d (texture-id *texture-spec*))
+;;  (gl:active-texture 1)
+;;  (gl:bind-texture :texture-2d (texture-id *texture-spec*))
 
   (shader-use *shader-program*)
 
-  (shader-set-uniform *shader-program* "material.shininess" 32.0)
-  (shader-set-uniform *shader-program* "material.diffuse" 0)
-  (shader-set-uniform *shader-program* "material.specular" 1)
+;;  (shader-set-uniform *shader-program* "material.shininess" 32.0)
+;;  (shader-set-uniform *shader-program* "material.diffuse" 0)
+;;  (shader-set-uniform *shader-program* "material.specular" 1)
 
-  (shader-set-uniform *shader-program* "dirLight.direction" 1.0 -1 1)
-  (shader-set-uniform *shader-program* "dirLight.ambient" 0.2 0.2 0.2)
-  (shader-set-uniform *shader-program* "dirLight.diffuse" 0.5 0.5 0.5)
-  (shader-set-uniform *shader-program* "dirLight.specular" 1.0 1.0 1.0)
+;;  (shader-set-uniform *shader-program* "dirLight.direction" 1.0 -1 1)
+;;  (shader-set-uniform *shader-program* "dirLight.ambient" 0.2 0.2 0.2)
+;;  (shader-set-uniform *shader-program* "dirLight.diffuse" 0.5 0.5 0.5)
+;;  (shader-set-uniform *shader-program* "dirLight.specular" 1.0 1.0 1.0)
 
   (let ((i 0))
     (macrolet ((set-light-prop (i prop &rest values)
@@ -297,43 +297,43 @@
 	  (set-light-prop i "specular" 1.0 1.0 1.0))
 	(incf i))))
 
-  (let ((view (view-matrix *camera*))
-	(projection (mperspective 45 (/ v-width v-height) 0.1 1000)))
+;;  (let ((view (view-matrix *camera*))
+;;	(projection (mperspective 45 (/ v-width v-height) 0.1 1000)))
 
-    (with-slots (pos) *camera*
-      (with-vec (x y z) pos
-	(shader-set-uniform *shader-program* "viewPos" x y z)))
+;;    (with-slots (pos) *camera*
+;;      (with-vec (x y z) pos
+;;	(shader-set-uniform *shader-program* "viewPos" x y z)))
     
-    (shader-set-uniform *shader-program* "view" (marr view))
-    (shader-set-uniform *shader-program* "projection" (marr projection))
+;;    (shader-set-uniform *shader-program* "view" (marr view))
+;;    (shader-set-uniform *shader-program* "projection" (marr projection))
 
-    (dotimes (i 10)
-      (let* ((step (/ 360 10))
-	     (model (meye 4))
-	     (scale 3)
-	     (time (/ (get-internal-run-time) internal-time-units-per-second))
-	     (angle (+ (* 2 time) (* step i)))
-	     (i (* scale (sin angle)))
-	     (j (* scale (cos angle))))
-	(nmtranslate model (vec i 0 j))
-	(shader-set-uniform *shader-program* "model" (marr model))
+;;    (dotimes (i 10)
+;;      (let* ((step (/ 360 10))
+;;	     (model (meye 4))
+;;	     (scale 3)
+;;	     (time (/ (get-internal-run-time) internal-time-units-per-second))
+;;	     (angle (+ (* 2 time) (* step i)))
+;;	     (i (* scale (sin angle)))
+;;	     (j (* scale (cos angle))))
+;;	(nmtranslate model (vec i 0 j))
+;;	(shader-set-uniform *shader-program* "model" (marr model))
 
-	(gl:bind-vertex-array *vao*)
-	(gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*))))
+;;	(gl:bind-vertex-array *vao*)
+;;	(gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*))))
 
-    (dolist (light-pos *point-light-positions*)
-      (let ((model (meye 4)))
-	(nmtranslate model light-pos)
-	(nmscale model (vec 0.2 0.2 0.2))
+;;    (dolist (light-pos *point-light-positions*)
+;;      (let ((model (meye 4)))
+;;	(nmtranslate model light-pos)
+;;	(nmscale model (vec 0.2 0.2 0.2))
 
-	(shader-set-uniform *light-shader* "view" (marr view))
-	(shader-set-uniform *light-shader* "projection" (marr projection))
-	(shader-set-uniform *light-shader* "model" (marr model))
+;;	(shader-set-uniform *light-shader* "view" (marr view))
+;;	(shader-set-uniform *light-shader* "projection" (marr projection))
+;;	(shader-set-uniform *light-shader* "model" (marr model))
 
-	(gl:bind-vertex-array *vao*)
-	(gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*))))
+;;	(gl:bind-vertex-array *vao*)
+;;	(gl:draw-elements :triangles (gl:make-null-gl-array :unsigned-int) :count (length *indices*))))
 
-    (gl:bind-vertex-array 0))
+;;    (gl:bind-vertex-array 0))
 
   (render-entity *entity* v-width v-height *camera*)
   (render-entity *d20-entity* v-width v-height *camera*))

@@ -36,7 +36,7 @@
     (gl:tex-image-2d :texture-2d
 		     0 :rgba
 		     width height
-		     0 :rgba :unsigned-byte
+		     0 (gl-color-format png) :unsigned-byte
 		     (pngload:data png))
 
     (gl:generate-mipmap :texture-2d)
@@ -45,6 +45,13 @@
 		   :id texture-id
 		   :width width
 		   :height height)))
+
+(defun gl-color-format (png)
+  (second (assoc (pngload:color-type png)
+		 '((:greyscale        :red)
+		   (:grayscale-alpha  :rg)
+		   (:truecolour       :rgb)
+		   (:truecolour-alpha :rgba)))))
 
 (defmethod free-texture ((texture texture))
   (gl:delete-texture (texture-id texture)))

@@ -9,12 +9,6 @@
 		nx ny nz
 		tx ty))))))
 
-(defun vertex (position normal tex-coords)
-  (make-instance 'vertex
-		 :position position
-		 :normal normal
-		 :tex-coords tex-coords))
-
 (defclass mesh ()
   ((vertices
     :initarg :vertices
@@ -35,8 +29,10 @@
   (let ((vao (gl:gen-vertex-array))
 	(vbo (gl:gen-buffer))
 	(ebo (gl:gen-buffer)))
+    ;;; Bind the Vertex Array Object for this mesh
+    ;;; It will store references to the bound VBO and EBO
     (gl:bind-vertex-array vao)
-
+    
     ;;; Write our mesh to OpenGL buffers
     (let* ((vertex-attrib-lists (map 'list #'vertex-attrib-list vertices))
 	   (vertex-attrib-arr   (apply #'concatenate 'vector vertex-attrib-lists))
@@ -51,7 +47,7 @@
       (gl:buffer-data :element-array-buffer :static-draw gl-arr)
       (gl:free-gl-array gl-arr))
 
-    ;;; Configure the attribute array
+    ;;; Configure the vertex format
     (gl:enable-vertex-attrib-array 0)
     (gl:vertex-attrib-pointer 0 3 :float :false (* 8 4) 0)
 
@@ -76,7 +72,7 @@
     (gl:delete-buffers (list vbo ebo))))
 		      
 (defmethod render-mesh ((mesh mesh))
-  (with-slots (indices textures vao) mesh
+  (with-slots (indices textures vao vbo ebo) mesh
     (gl:bind-vertex-array vao)
     (gl:draw-elements :triangles
 		      (gl:make-null-gl-array :unsigned-int)
