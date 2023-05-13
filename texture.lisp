@@ -34,7 +34,7 @@
     (gl:tex-parameter :texture-2d :texture-mag-filter :linear)
 
     (gl:tex-image-2d :texture-2d
-		     0 :rgba
+		     0 (gl-color-format png)
 		     width height
 		     0 (gl-color-format png) :unsigned-byte
 		     (pngload:data png))
