@@ -119,6 +119,9 @@
 (defparameter *d20-model* '())
 (defparameter *d20-entity* '())
 
+(defparameter *blender-cube* '())
+(defparameter *blender-cube-pretty* '())
+
 ;;;
 ;;; GLFW Callbacks
 ;;;
@@ -238,15 +241,33 @@
 				:transform (transform (vec 0 0 0)
 						      (vec 1 1 1))))
 
-  (setf *d20-model* (load-model #P"./models/d20.obj"
-			       :diffuse-path #P"./D20.png"
-			       :specular-path #P"./D20.png"))
+  (setf *d20-model* (load-model #P"./models/Dice_d20.obj"
+			       :diffuse-path #P"./d20white.png"
+			       :specular-path #P"./d20white.png"))
 
   (setf *d20-entity* (make-instance 'entity
 				    :model *d20-model*
 				    :shader *shader-program*
 				    :transform (transform (vec 4 1 4)
-							  (vec 3 3 3)))))
+							  (vec 3 3 3))))
+
+  (let ((model (load-model #P"./models/cube_blender.obj"
+			   :diffuse-path #P"./container.png"
+			   :specular-path #P"./container.specular.png")))
+    (setf *blender-cube* (make-instance 'entity
+					:model model
+					:shader *shader-program*
+					:transform (transform (vec -4 4 0)
+							      (vec 2 2 2)))))
+
+  (let ((model (load-model #P"./models/cube_blender_pretty.obj"
+			   :diffuse-path #P"./container.png"
+			   :specular-path #P"./container.specular.png")))
+    (setf *blender-cube-pretty* (make-instance 'entity
+					       :model model
+					       :shader *shader-program*
+					       :transform (transform (vec -4 -4 0)
+								     (vec 2 4 2))))))
 
 (defun cleanup ()
   "Cleans up OpenGL."
@@ -336,7 +357,9 @@
 ;;    (gl:bind-vertex-array 0))
 
   (render-entity *entity* v-width v-height *camera*)
-  (render-entity *d20-entity* v-width v-height *camera*))
+  (render-entity *d20-entity* v-width v-height *camera*)
+  (render-entity *blender-cube* v-width v-height *camera*)
+  (render-entity *blender-cube-pretty* v-width v-height *camera*))
 
 (defun render-debug-ui (fps frame-time time dt)
   "Renders debug info."
