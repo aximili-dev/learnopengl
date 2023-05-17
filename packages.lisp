@@ -12,6 +12,14 @@
    :vertex-normal
    :vertex-tex-coords))
 
+(defpackage :perlin
+  (:use
+   :common-lisp
+   :3d-vectors
+   :fiveam)
+  (:export
+   :perlin))
+
 (defpackage :game-engine
   (:use
    :common-lisp
@@ -19,7 +27,8 @@
    :3d-matrices
    :org.shirakumo.flare.quaternion
    :org.shirakumo.flare.transform
-   :fiveam)
+   :fiveam
+   :perlin)
   (:export
    :run-engine)
   (:shadow :speed))

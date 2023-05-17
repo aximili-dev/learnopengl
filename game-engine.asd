@@ -42,5 +42,6 @@
   :version "0.1.0"
   :build-operation "program-op"
   :build-pathname "game-engine"
-  :entry-point "game-engine:run"
+  :entry-point "game-engine:run-engine"
   :depends-on (:game-engine))
+
