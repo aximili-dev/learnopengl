@@ -80,6 +80,7 @@
 	(vec  0.0  0.0 -3.0)))
 
 (defparameter *shader-program* nil)
+(defparameter *shader-program-colored* nil)
 
 (defparameter *viewport-width* 800)
 (defparameter *viewport-height* 600)
@@ -121,6 +122,11 @@
 
 (defparameter *blender-cube* '())
 (defparameter *blender-cube-pretty* '())
+
+(defparameter *perlin-points* '())
+
+(defparameter *point-cloud-vao* '())
+(defparameter *point-cloud-vbo* '())
 
 ;;;
 ;;; GLFW Callbacks
@@ -181,6 +187,11 @@
   (setf *light-shader*
 	(load-shader-from-disk #P"./shaders/model.vert"
 			       #P"./shaders/light.frag"))
+
+  (setf *shader-program-colored*
+	(load-shader-from-disk #P"./shaders/model_1p.vert"
+			       #P"./shaders/model_1p.frag"))
+	
 
 ;;  (shader-set-uniform *shader-program* "material.diffuse" 0)
 ;;  (shader-set-uniform *shader-program* "material.specular" 1)
@@ -267,7 +278,48 @@
 					       :model model
 					       :shader *shader-program*
 					       :transform (transform (vec -4 -4 0)
-								     (vec 2 4 2))))))
+								     (vec 2 4 2)))))
+
+  (let ((w 100)
+	(h 30)
+	(floor-color (vec 1 1 1))
+	(ceil-color (vec 0 0 0)))
+    (setf *perlin-points* (make-array 0
+				      :adjustable t
+				      :fill-pointer 0))
+
+    (dotimes (x w)
+      (dotimes (y h)
+	(dotimes (z w)
+
+	  (let ((value (perlin (vec (/ x 10) (/ y 10) (/ z 10)))))
+	    (when (> value 0)
+	      (vector-push-extend (float (/ x 10)) *perlin-points*)
+	      (vector-push-extend (float (/ y 10)) *perlin-points*)
+	      (vector-push-extend (float (/ z 10)) *perlin-points*)
+	      (vector-push-extend (float (/ x w)) *perlin-points*)
+	      (vector-push-extend (float (/ y h)) *perlin-points*)
+	      (vector-push-extend (float (/ x w)) *perlin-points*)))))))
+
+    (setf *point-cloud-vao* (gl:gen-vertex-array))
+    (setf *point-cloud-vbo* (gl:gen-buffer))
+
+    (gl:bind-vertex-array *point-cloud-vao*)
+
+    (let ((gl-arr (make-gl-array *perlin-points* :float)))
+      (gl:bind-buffer :array-buffer *point-cloud-vbo*)
+      (gl:buffer-data :array-buffer :static-draw gl-arr)
+      (gl:free-gl-array gl-arr))
+
+    (gl:enable-vertex-attrib-array 0)
+    (gl:vertex-attrib-pointer 0 3 :float :false (* 6 4) 0)
+
+    (gl:enable-vertex-attrib-array 1)
+    (gl:vertex-attrib-pointer 1 3 :float :false (* 6 4) (* 3 4))
+
+    (gl:bind-vertex-array 0)
+
+  )
 
 (defun cleanup ()
   "Cleans up OpenGL."
@@ -356,10 +408,24 @@
 
 ;;    (gl:bind-vertex-array 0))
 
-  (render-entity *entity* v-width v-height *camera*)
-  (render-entity *d20-entity* v-width v-height *camera*)
-  (render-entity *blender-cube* v-width v-height *camera*)
-  (render-entity *blender-cube-pretty* v-width v-height *camera*))
+  ;;(render-entity *entity* v-width v-height *camera*)
+  ;;(render-entity *d20-entity* v-width v-height *camera*)
+  ;;(render-entity *blender-cube* v-width v-height *camera*)
+  ;;(render-entity *blender-cube-pretty* v-width v-height *camera*)
+
+  (shader-use *shader-program-colored*)
+
+  (let ((view (view-matrix *camera*))
+	(proj (mperspective 45 (/ v-width v-height) 0.1 1000)))
+    (shader-set-uniform *shader-program-colored* "view" (marr view))
+    (shader-set-uniform *shader-program-colored* "projection" (marr proj))
+    (shader-set-uniform *shader-program-colored* "model" (marr (meye 4))))
+
+  (gl:bind-vertex-array *point-cloud-vao*)
+  (gl:draw-arrays :points 0 (length *perlin-points*))
+  (gl:bind-vertex-array 0)
+  
+  )
 
 (defun render-debug-ui (fps frame-time time dt)
   "Renders debug info."

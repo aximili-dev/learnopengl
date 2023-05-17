@@ -55,4 +55,7 @@
        
        (gl:enable :depth-test)
 
+       ;;; https://community.khronos.org/t/adjust-gl-points-size/67980
+       (gl:enable :program-point-size)
+
        ,@body)))
