@@ -156,7 +156,7 @@
 	 (vec2-0 (vec 0 0))
 	 (vec3-0 (vec 0 0 0))
 	 (vertices (list v0 v1 v2))
-	 (indices '(0 1 2))
+	 (indices '(1 2 3))
 	 (result (make-face-v indices vertices)))
     (is (equalp (list (make-vertex
 		       :position (vcopy v0)
@@ -179,7 +179,7 @@
 	 (vec2-0 (vec 0 0))
 	 (vec3-0 (vec 0 0 0))
 	 (vertices (list v0 v1 v2))
-	 (indices '("0" "1" "2"))
+	 (indices '("1" "2" "3"))
 	 (result (parse-face-v indices vertices)))
     (is (equalp (list (make-vertex
 		       :position (vcopy v0)
@@ -203,7 +203,7 @@
 	 (vec3-0 (vec 0 0 0))
 	 (vertices (list v0 v1 v2))
 	 (tex-coords (list t0))
-	 (indices '("0/0" "1/0" "2/0"))
+	 (indices '("1/1" "2/1" "3/1"))
 	 (result (parse-face-vt indices vertices tex-coords)))
     (is (equalp (list (make-vertex
 		       :position (vcopy v0)
@@ -229,7 +229,7 @@
 	 (vec3-0 (vec 0 0 0))
 	 (vertices (list v0 v1 v2))
 	 (tex-coords (list t0 t1 t2))
-	 (indices '("0/0" "1/1" "2/2"))
+	 (indices '("1/1" "2/2" "3/3"))
 	 (result (parse-face-vt indices vertices tex-coords)))
     (is (equalp (list (make-vertex
 		       :position (vcopy v0)
@@ -258,7 +258,7 @@
 	 (vertices (list v0 v1 v2))
 	 (tex-coords (list t0 t1 t2))
 	 (normals (list n0 n1 n2))
-	 (indices '("0/0/0" "1/1/1" "2/2/2"))
+	 (indices '("1/1/1" "2/2/2" "3/3/3"))
 	 (result (parse-face-vtn indices vertices tex-coords normals)))
     (is (equalp (list (make-vertex
 		       :position (vcopy v0)
@@ -283,7 +283,7 @@
 	 (n2 (vec 0.9 0.05))
 	 (vertices (list v0 v1 v2))
 	 (normals (list n0 n1 n2))
-	 (indices '("0//0" "1//1" "2//2"))
+	 (indices '("1//1" "2//2" "3//3"))
 	 (result (parse-face-vn indices vertices normals)))
     (is (equalp (list (make-vertex
 		       :position (vcopy v0)
