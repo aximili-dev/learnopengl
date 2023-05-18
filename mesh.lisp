@@ -1,13 +1,12 @@
 (in-package :game-engine)
 
 (defun vertex-attrib-list (v)
-  (wavefront:with-vertex (position normal tex-coords) v
-    (with-vec (px py pz) position
-      (with-vec (nx ny nz) normal
-	(with-vec (tx ty) tex-coords
-	  (list px py pz
-		nx ny nz
-		tx ty))))))
+  (with-vec (nx ny nz) (wavefront:vertex-normal v)
+    (with-vec (px py pz) (wavefront:vertex-position v)
+      (with-vec (tx ty) (wavefront:vertex-tex-coords v)
+	(list px py pz
+	      nx ny nz
+	      tx ty)))))
 
 (defclass mesh ()
   ((vertices
