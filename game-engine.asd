@@ -33,9 +33,16 @@
 	       (:file "util")
 	       (:file "wavefront")))
 
+(asdf:defsystem :game-engine/examples
+  :description "Graphics Engine Examples"
+  :depends-on (:game-engine)
+  :components ((:module "examples"
+		:components ((:file "packages")
+			     (:file "01-triangle")))))
+
 #+sb-core-compression
 (defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
-  (uiop:dump-image (asdf:output-file o c) :executable t :compression t))
+  (uiop:dump-image (asdf:output-file o c) :executable t :compression nil))
 
 (asdf:defsystem :game-engine/executable
   :description "Game engine executable"

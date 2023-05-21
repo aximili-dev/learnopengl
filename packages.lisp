@@ -30,5 +30,12 @@
    :fiveam
    :perlin)
   (:export
-   :run-engine)
+   :run-engine
+   :with-graphics
+   :with-gl-array
+   :graphics
+   :graphics-window
+   :load-shader-from-disk
+   :shader-use
+   :shader-free)
   (:shadow :speed))

@@ -7,6 +7,11 @@
       (setf (gl:glaref arr i) (aref array i)))
     arr))
 
+(defmacro with-gl-array ((gl-array array type) &body body)
+  `(let ((,gl-array (make-gl-array ,array ,type)))
+     ,@body
+     (gl:free-gl-array ,gl-array)))
+
 (defparameter *vertices*
   ;; Positions      Normals        Tex coords
   #(-0.5 -0.5 -0.5  0.0  0.0 -1.0  0.0  0.0
@@ -456,6 +461,87 @@
 
 (defun tick (time dt)
   (process-tick *camera* time dt))
+
+(defclass graphics ()
+  ((v-width
+    :initarg :v-width
+    :initform 800
+    :accessor graphics-v-width
+    :documentation "The width of the viewport.")
+   (v-height
+    :initarg :v-height
+    :initform 600
+    :accessor graphics-v-height
+    :documentation "The height of the viewport.")
+   (title
+    :initarg :title
+    :initform "Graphics"
+    :accessor graphics-title
+    :documentation "The title of the running application.")
+   (window
+    :initarg :window
+    :accessor graphics-window
+    :documentation "The GLFW window handle.")))
+
+(defmethod graphics-resize ((graphics graphics) window width height)
+  ;;(with-slots (v-width v-height) *font*
+  ;;  (setf v-width width)
+  ;;  (setf v-height height))
+
+  (setf (graphics-v-width graphics) width)
+  (setf (graphics-v-height graphics) height)
+  (gl:viewport 0 0 width height))
+
+(defmacro with-graphics ((graphics title
+			  &key window-width window-height hide-cursor)
+			 &body body)
+  "Creates a window using GLFW. Creates an OpenGL context that links to the window."
+  (let ((window (gensym))
+	(resize-callback-name (gensym))
+	(keyboard-callback-name (gensym)))
+    `(glfw:with-init
+       (let* ((,window (glfw:create-window :width ,window-width
+					   :height ,window-height
+					   :title ,title
+					   :context-version-major 4
+					   :context-version-minor 5
+					   :opengl-profile :opengl-core-profile))
+	      (graphics (make-instance 'graphics
+				       :window ,window
+				       :v-width ,window-width
+				       :v-height ,window-height
+				       :title ,title)))
+	 (glfw:def-window-size-callback ,resize-callback-name (window width height)
+	   (graphics-resize ,graphics window width height))
+
+	 (glfw:set-window-size-callback ',resize-callback-name ,window)
+
+	 ;;; TODO: Setup keyboard callback
+	 ;;; Would be great to be able to handle key events, and also keep track of keyboard state
+	 (glfw:def-key-callback ,keyboard-callback-name (window key scan action mod)
+	   (if (eql action :press)
+	       (case key
+		 (:escape (glfw:set-window-should-close window)))))
+
+	 (glfw:set-key-callback ',keyboard-callback-name ,window)
+	 
+	 ;;; TODO: Setup mouse callbacks
+	 ;;; Handle mouse movement
+	 ;;; Handle mouse entering window
+
+
+	 ,(if hide-cursor
+	      `(glfw:set-input-mode :cursor :disabled))
+
+	 (gl:viewport 0 0 ,window-width ,window-height)
+
+	 (gl:enable :depth-test)
+	 
+         ;;; https://community.khronos.org/t/adjust-gl-points-size/67980
+	 (gl:enable :program-point-size)
+
+	 ,@body))))
+	 
 
 ;;; Time step algorithm from https://gafferongames.com/post/fix_your_timestep/
 (defun run-engine ()
