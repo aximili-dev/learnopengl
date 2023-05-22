@@ -38,7 +38,8 @@
   :depends-on (:game-engine)
   :components ((:module "examples"
 		:components ((:file "packages")
-			     (:file "01-triangle")))))
+			     (:file "01-triangle")
+			     (:file "02-meshes")))))
 
 #+sb-core-compression
 (defmethod asdf:perform ((o asdf:image-op) (c asdf:system))

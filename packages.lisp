@@ -30,12 +30,27 @@
    :fiveam
    :perlin)
   (:export
-   :run-engine
-   :with-graphics
-   :with-gl-array
+   :camera
+   :fps-camera
+   :entity
    :graphics
+   :graphics-bmp-font
+   :graphics-debug-text
+   :graphics-keys
+   :graphics-run
+   :graphics-v-height
+   :graphics-v-width
    :graphics-window
+   :load-model
    :load-shader-from-disk
+   :process-tick
+   :render-entity
+   :render-mesh
+   :render-model
+   :run-engine
+   :shader-set-uniform
    :shader-use
-   :shader-free)
+   :shader-free
+   :with-graphics
+   :with-gl-array)
   (:shadow :speed))

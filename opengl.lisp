@@ -481,24 +481,104 @@
    (window
     :initarg :window
     :accessor graphics-window
-    :documentation "The GLFW window handle.")))
+    :documentation "The GLFW window handle.")
+   (keys
+    :initform '()
+    :accessor graphics-keys
+    :documentation "Current keyboard state.")
+   (bmp-font
+    :initarg :bmp-font
+    :initform '()
+    :accessor graphics-bmp-font
+    :documentation "Bitmap font.")
+   (debug-p
+    :initarg :debug-p
+    :initform '()
+    :accessor graphics-debug-p
+    :documentation "Whether to show the graphics UI.")
+   (debug-text
+    :initarg :debug-text
+    :initform '()
+    :accessor graphics-debug-text
+    :documentation "A list of strings to show on screen, from the bottom down")))
 
 (defmethod graphics-resize ((graphics graphics) window width height)
-  ;;(with-slots (v-width v-height) *font*
-  ;;  (setf v-width width)
-  ;;  (setf v-height height))
+  (with-slots (v-width v-height) (graphics-bmp-font graphics)
+    (setf v-width width)
+    (setf v-height height))
 
   (setf (graphics-v-width graphics) width)
   (setf (graphics-v-height graphics) height)
   (gl:viewport 0 0 width height))
 
+(defmethod graphics-run ((graphics graphics) render-fn &optional tick-fn)
+  (let ((time         0.0)
+	(dt           0.01)
+	(current-time (/ (get-internal-real-time) internal-time-units-per-second))
+	(acc          0.0))
+    (loop for frame from 0
+	  until (glfw:window-should-close-p (graphics-window graphics))
+	  do (progn
+	       (let* ((new-time   (/ (get-internal-real-time) internal-time-units-per-second))
+		      (frame-time (- new-time current-time)))
+		 (setf current-time new-time)
+
+		 (incf acc frame-time)
+
+		 (loop while (>= acc dt)
+		       do (progn
+			    (funcall tick-fn time dt)
+			    (incf time dt)
+			    (decf acc dt)))
+
+		 (let ((fps (if (> frame-time 0)
+				(/ 1 frame-time)
+				-12.0)))
+		   (funcall render-fn frame fps))
+
+		 (when (graphics-debug-p graphics)
+		   (with-slots (debug-text bmp-font) graphics
+		     (dotimes (y (length debug-text))
+		       (render-bmp-text bmp-font
+					(nth y debug-text)
+					1
+					0 y))))
+		 (setf (graphics-debug-text graphics) '())
+		
+		     ;;(loop for y from (1- (length debug-text)) downto 0
+		;;	   do (progn
+		;;		(render-bmp-text bmp-font
+		;;				 (nth (- (length debug-text) y) debug-text)
+		;;				 1
+		;;				 0 y)))))
+
+		 (glfw:swap-buffers (graphics-window graphics))
+		 (glfw:poll-events))))))
+	     
+
+(defmethod graphics-set-key-callback ((graphics graphics) callback)
+  "callback should receive (window key scan action mod)."
+  (with-slots (keys) graphics
+    (let ((callback-sym (gensym)))
+      (glfw:def-key-callback callback-sym (window key scan action mod)
+	(if (eql action :press)
+	    (case key
+	      (:escape (glfw:set-window-should-close window))
+	      (:f3 (setf (graphics-debug-p graphics) (not (graphics-debug-p graphics))))
+	      (t (progn
+		   (push key (graphics-keys graphics))
+		   (funcall callback window key scan action mod)))))
+	(if (eql action :release)
+	    (flet ((is-key (other) (eql other key)))
+	      (setf keys (remove-if #'is-key keys)))))
+      (glfw:set-key-callback (quote callback-sym) (graphics-window graphics)))))
+    
 (defmacro with-graphics ((graphics title
 			  &key window-width window-height hide-cursor)
 			 &body body)
   "Creates a window using GLFW. Creates an OpenGL context that links to the window."
   (let ((window (gensym))
-	(resize-callback-name (gensym))
-	(keyboard-callback-name (gensym)))
+	(resize-callback-name (gensym)))
     `(glfw:with-init
        (let* ((,window (glfw:create-window :width ,window-width
 					   :height ,window-height
@@ -506,24 +586,21 @@
 					   :context-version-major 4
 					   :context-version-minor 5
 					   :opengl-profile :opengl-core-profile))
-	      (graphics (make-instance 'graphics
+	      (,graphics (make-instance 'graphics
 				       :window ,window
 				       :v-width ,window-width
 				       :v-height ,window-height
-				       :title ,title)))
+				       :title ,title
+				       :debug-p t
+				       :bmp-font (load-bitmap-font #P"./charmap.png"
+								   ,window-width
+								   ,window-height))))
 	 (glfw:def-window-size-callback ,resize-callback-name (window width height)
 	   (graphics-resize ,graphics window width height))
 
 	 (glfw:set-window-size-callback ',resize-callback-name ,window)
 
-	 ;;; TODO: Setup keyboard callback
-	 ;;; Would be great to be able to handle key events, and also keep track of keyboard state
-	 (glfw:def-key-callback ,keyboard-callback-name (window key scan action mod)
-	   (if (eql action :press)
-	       (case key
-		 (:escape (glfw:set-window-should-close window)))))
-
-	 (glfw:set-key-callback ',keyboard-callback-name ,window)
+	 (graphics-set-key-callback ,graphics (lambda (window key scan action mod) '()))
 	 
 	 ;;; TODO: Setup mouse callbacks
 	 ;;; Handle mouse movement

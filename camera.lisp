@@ -68,16 +68,16 @@ If false, forward moves camera forward at same height")
   (with-slots (pos) camera
     (setf pos (v+ pos delta))))
 
-(defmethod process-tick ((camera camera) time dt)
+(defmethod process-tick ((camera camera) time dt keys)
   (with-slots (speed pos) camera
     (with-camera-props (front right) camera
       (let ((distance  (* speed dt))
 	    (direction (cond
-			 ((find :w *keys*) (vc +vy+ right))
-			 ((find :a *keys*) (v- right))
-			 ((find :s *keys*) (vc right +vy+))
-			 ((find :d *keys*) (v+ right))
-			 ((find :space *keys*) +vy+)
-			 ((find :left-shift *keys*) (v- +vy+)))))
+			 ((find :w keys) (vc +vy+ right))
+			 ((find :a keys) (v- right))
+			 ((find :s keys) (vc right +vy+))
+			 ((find :d keys) (v+ right))
+			 ((find :space keys) +vy+)
+			 ((find :left-shift keys) (v- +vy+)))))
 	(if direction
 	    (move camera (v* (vunit direction) distance)))))))
