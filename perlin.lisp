@@ -37,10 +37,10 @@
 	(z (floor z)))
     (loop for i from 0 below 8
 	  do (progn
-	       (setf (aref octets (+ (* i 3) 0)) (ldb (byte 8 (* i 8)) x))
-	       (setf (aref octets (+ (* i 3) 1)) (ldb (byte 8 (* i 8)) y))
-	       (setf (aref octets (+ (* i 3) 2)) (ldb (byte 8 (* i 8)) z))
-	       (setf (aref octets (+ (* i 3) 3)) (ldb (byte 8 (* i 8)) seed))))
+	       (setf (aref octets (+ (* i 4) 0)) (ldb (byte 8 (* i 8)) x))
+	       (setf (aref octets (+ (* i 4) 1)) (ldb (byte 8 (* i 8)) y))
+	       (setf (aref octets (+ (* i 4) 2)) (ldb (byte 8 (* i 8)) z))
+	       (setf (aref octets (+ (* i 4) 3)) (ldb (byte 8 (* i 8)) seed))))
     (let* ((hash (city-hash:city-hash-64 octets))
 	   (hash-low (ldb (byte 32 0) hash))
 	   (hash-high (ldb (byte 32 32) hash))
@@ -114,8 +114,9 @@
 	   (z3 (lerp baa bab zf))
 	   (z4 (lerp bba bbb zf))
 	   (y1 (lerp z1 z2 yf))
-	   (y2 (lerp z3 z4 yf)))
-      (lerp y1 y2 xf))))
+	   (y2 (lerp z3 z4 yf))
+	   (result (lerp y1 y2 xf)))
+      result)))
 
 (def-suite perlin
   :description "Test perlin functions")

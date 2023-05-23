@@ -128,7 +128,6 @@
 (defparameter *blender-cube* '())
 (defparameter *blender-cube-pretty* '())
 
-(defparameter *perlin-points* '())
 
 (defparameter *point-cloud-vao* '())
 (defparameter *point-cloud-vbo* '())
@@ -285,8 +284,13 @@
 					       :transform (transform (vec -4 -4 0)
 								     (vec 2 4 2)))))
 
-  (let ((w 100)
-	(h 30)
+  (let ((vao (gl:gen-vertex-array))
+	(vbo (gl:gen-buffer))
+	(ebo (gl:gen-buffer))
+	(*perlin-points* (make-array 0 :adjustable t :fill-pointer 0))
+	(indices (make-array 0 :adjustable t :fill-pointer 0))
+	(w 150)
+	(h 1)
 	(floor-color (vec 1 1 1))
 	(ceil-color (vec 0 0 0)))
     (setf *perlin-points* (make-array 0
@@ -297,23 +301,54 @@
       (dotimes (y h)
 	(dotimes (z w)
 
-	  (let ((value (perlin (vec (/ x 10) (/ y 10) (/ z 10)))))
-	    (when (> value 0)
-	      (vector-push-extend (float (/ x 10)) *perlin-points*)
-	      (vector-push-extend (float (/ y 10)) *perlin-points*)
-	      (vector-push-extend (float (/ z 10)) *perlin-points*)
-	      (vector-push-extend (float (/ x w)) *perlin-points*)
-	      (vector-push-extend (float (/ y h)) *perlin-points*)
-	      (vector-push-extend (float (/ x w)) *perlin-points*)))))))
+	  (let* ((wpos (vec (/ x 10) (/ y 10) (/ z 10)))
+	         (value (+ (* (perlin (v* wpos 0.2) :seed 23) 5)
+			   (* (perlin (v* wpos 0.4) :seed 60) 2)
+			      (perlin     wpos      :seed 92)
+			   (/ (perlin (v* wpos 2)   :seed 61) 2)
+			   (/ (perlin (v* wpos 4)   :seed 50) 4)
+			   (/ (perlin (v* wpos 8)   :seed 13) 8)))
+		 (value (if (< value 0)
+			    (/ value 4)
+			    value))
+		 (value (if (< value -1)
+			    -1.0
+			    value))
+		 (value (+ 4 value))
+		 (color (height-to-color value)))
+	    (when t
+	      (vector-push-extend (vx wpos) *perlin-points*)
+	      (vector-push-extend value *perlin-points*)
+	      (vector-push-extend (vz wpos) *perlin-points*)
+	      (vector-push-extend (vx color) *perlin-points*)
+	      (vector-push-extend (vy color) *perlin-points*)
+	      (vector-push-extend (vz color) *perlin-points*))))))
 
-    (setf *point-cloud-vao* (gl:gen-vertex-array))
-    (setf *point-cloud-vbo* (gl:gen-buffer))
+    (dotimes (z (1- w))
+      (dotimes (x w)
+	(vector-push-extend (+ (* z w) x) indices)
+	(vector-push-extend (+ (* z w) x w) indices))
 
-    (gl:bind-vertex-array *point-cloud-vao*)
+      (vector-push-extend (+ (* z w)
+			     w
+			     (- w 1))
+			  indices)
+      (vector-push-extend (* (1+ z) w)
+			  indices))
+
+    (print (length indices))
+    
+    (setf *point-cloud-vao* vao)
+    (gl:bind-vertex-array vao)
 
     (let ((gl-arr (make-gl-array *perlin-points* :float)))
-      (gl:bind-buffer :array-buffer *point-cloud-vbo*)
+      (gl:bind-buffer :array-buffer vbo)
       (gl:buffer-data :array-buffer :static-draw gl-arr)
+      (gl:free-gl-array gl-arr))
+
+    (let ((gl-arr (make-gl-array indices :unsigned-int)))
+      (gl:bind-buffer :element-array-buffer ebo)
+      (gl:buffer-data :element-array-buffer :static-draw gl-arr)
       (gl:free-gl-array gl-arr))
 
     (gl:enable-vertex-attrib-array 0)
@@ -322,9 +357,30 @@
     (gl:enable-vertex-attrib-array 1)
     (gl:vertex-attrib-pointer 1 3 :float :false (* 6 4) (* 3 4))
 
-    (gl:bind-vertex-array 0)
+    (gl:bind-vertex-array 0))
 
   )
+
+(defun height-to-color (y)
+  (let ((c (/ y 8)))
+    (vec c c c)))
+
+(defun height-to-color (y)
+  (cond
+    ((> y 3.4) (vec (/ #xEB #xFF)
+		    (/ #xF1 #xFF)
+		    (/ #xFF #xFF)))
+    ((> y 3.0) (vec (/ #x54 #xFF)
+		    (/ #x50 #xFF)
+		    (/ #x3B #xFF)))
+    ((> y -0.4) (vec (/ #x93 #xFF)
+		    (/ #xC4 #xFF)
+		    (/ #x8B #xFF)))
+    (t (vec (/ #x85 #xFF)
+	    (/ #xC7 #xFF)
+	    (/ #xF2 #xFF)))))
+     
+
 
 (defun cleanup ()
   "Cleans up OpenGL."
@@ -427,7 +483,9 @@
     (shader-set-uniform *shader-program-colored* "model" (marr (meye 4))))
 
   (gl:bind-vertex-array *point-cloud-vao*)
-  (gl:draw-arrays :points 0 (length *perlin-points*))
+  (gl:draw-elements :triangle-strip
+		    (gl:make-null-gl-array :unsigned-int)
+		    :count 44998)
   (gl:bind-vertex-array 0)
   
   )
@@ -460,7 +518,7 @@
 ;;;
 
 (defun tick (time dt)
-  (process-tick *camera* time dt))
+  (process-tick *camera* time dt *keys*))
 
 (defclass graphics ()
   ((v-width
