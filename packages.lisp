@@ -38,6 +38,7 @@
    :graphics-debug-text
    :graphics-keys
    :graphics-run
+   :graphics-setup-fps-camera
    :graphics-v-height
    :graphics-v-width
    :graphics-window

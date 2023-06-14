@@ -24,7 +24,7 @@
     :initarg :diffuse-index
     :initform '())))
 
-(defmethod render-entity ((entity entity) v-width v-height camera)
+(defmethod render-entity ((entity entity) v-width v-height camera &key debugp)
   (with-slots (model shader transform diffuse-index specular-index) entity
     (shader-set-uniform shader "material.shininess" 32.0)
     (shader-set-uniform shader "material.diffuse" 0)
@@ -46,4 +46,8 @@
       (shader-set-uniform shader "projection" (marr projection))
       (shader-set-uniform shader "model" (marr (tmat4 transform))))
 
-    (render-model model shader :diffuse-location "material.diffuse" :specular-location "material.specular")))
+    (render-model model
+		  shader
+		  :diffuse-location "material.diffuse"
+		  :specular-location "material.specular"
+		  :debugp debugp)))

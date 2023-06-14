@@ -1,5 +1,51 @@
 (in-package :game-engine)
 
+(defun vertex-array (position &key normal color uv)
+  (let ((vertex-array (make-array 0 :adjustable t :fill-pointer 0)))
+    (with-vec (x y z) position
+      (vector-push-extend x vertex-array)
+      (vector-push-extend y vertex-array)
+      (vector-push-extend z vertex-array))
+
+    (when normal
+      (with-vec (x y z) normal
+	(vector-push-extend x vertex-array)
+	(vector-push-extend y vertex-array)
+	(vector-push-extend z vertex-array)))
+
+    (when color
+      (with-vec (x y z) color
+	(vector-push-extend x vertex-array)
+	(vector-push-extend y vertex-array)
+	(vector-push-extend z vertex-array)))
+
+    (when uv
+      (with-vec (x y z) uv
+	(vector-push-extend x vertex-array)
+	(vector-push-extend y vertex-array)
+	(vector-push-extend z vertex-array)))))
+
+(defun vertex-array-spec (&key (position 0 positionp) normal color uv)
+  (let ((total-size 0)
+	(current-index)
+	(current-stride))
+
+    (when position
+      (incf total-size))
+
+    (when normal
+      (incf total-size))
+
+    (when color
+      (incf total-size))
+
+    (when uv
+      (incf total-size))
+
+    (dotimes (i total-size)
+      (gl:enable-vertex-attrib-array i))))
+    
+
 (defun vertex-attrib-list (v)
   (with-vec (nx ny nz) (wavefront:vertex-normal v)
     (with-vec (px py pz) (wavefront:vertex-position v)
@@ -70,10 +116,12 @@
     (gl:delete-vertex-arrays (list vao))
     (gl:delete-buffers (list vbo ebo))))
 		      
-(defmethod render-mesh ((mesh mesh))
+(defmethod render-mesh ((mesh mesh) &key debugp)
   (with-slots (indices textures vao vbo ebo) mesh
     (gl:bind-vertex-array vao)
-    (gl:draw-elements :triangles
+    (gl:draw-elements (if debugp
+			  :lines
+			  :triangles)
 		      (gl:make-null-gl-array :unsigned-int)
 		      :count (length indices))
     (gl:bind-vertex-array 0)))

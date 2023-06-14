@@ -28,7 +28,7 @@
     (free-texture diffuse-texture)
     (free-texture specular-texture)))
 
-(defmethod render-model ((model model) shader &key diffuse-location specular-location)
+(defmethod render-model ((model model) shader &key diffuse-location specular-location debugp)
   (with-slots (mesh diffuse-texture specular-texture) model
     (when diffuse-location
       (gl:active-texture 0)
@@ -36,4 +36,4 @@
     (when specular-location
       (gl:active-texture 1)
       (gl:bind-texture :texture-2d (texture-id specular-texture)))
-    (render-mesh mesh)))
+    (render-mesh mesh :debugp debugp)))

@@ -30,9 +30,10 @@
 				  (vec  2.3 -3.3 -4.0)
 				  (vec -4.0  2.0 -12.0)
 				  (vec  0.0  0.0 -3.0))))
+      (graphics-setup-fps-camera graphics camera)
       (flet ((tick (time dt)
 	       (process-tick camera time dt (graphics-keys graphics)))
-	     (render (current-frame fps)
+	     (render (current-frame fps &key debugp)
 	       (gl:clear-color 0.21 0.36 0.43 1.0)
 	       (gl:clear :color-buffer :depth-buffer)
 	       
@@ -57,7 +58,8 @@
 	       (render-entity d20-entity
 			      (graphics-v-width graphics)
 			      (graphics-v-height graphics)
-			      camera)
+			      camera
+			      :debugp debugp)
 
 	       (push (format nil "FPS: ~3,3f" fps) (graphics-debug-text graphics))))
 	(graphics-run graphics #'render #'tick)))))

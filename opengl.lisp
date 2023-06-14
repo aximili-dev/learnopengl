@@ -153,19 +153,19 @@
       (flet ((is-key (other) (eql other key)))
 	(setf *keys* (remove-if #'is-key *keys*)))))
 
-(defun process-mouse (window x-pos y-pos)
-  (let ((x-offset (- x-pos *last-x*))
-	(y-offset (- *last-y* y-pos)))
-    (setf *last-x* x-pos)
-    (setf *last-y* y-pos)
+;;(defun process-mouse (window x-pos y-pos)
+;;  (let ((x-offset (- x-pos *last-x*))
+;;	(y-offset (- *last-y* y-pos)))
+;;    (setf *last-x* x-pos)
+;;    (setf *last-y* y-pos)
+;;
+;;    (if *mouse-just-entered*
+;;	(setf *mouse-just-entered* nil)
+;;	(handle-mouse-movement *camera* x-offset y-offset))))
 
-    (if *mouse-just-entered*
-	(setf *mouse-just-entered* nil)
-	(handle-mouse-movement *camera* x-offset y-offset))))
-
-(defun process-mouse-enter (window entered)
-  (if entered
-      (setf *mouse-just-entered* t)))
+;;(defun process-mouse-enter (window entered)
+;;  (if entered
+;;      (setf *mouse-just-entered* t)))
 
 (defparameter *world* nil)
 
@@ -291,8 +291,8 @@
 	(indices (make-array 0 :adjustable t :fill-pointer 0))
 	(w 150)
 	(h 1)
-	(floor-color (vec 1 1 1))
-	(ceil-color (vec 0 0 0)))
+	(max 5)
+	(min -1))
     (setf *perlin-points* (make-array 0
 				      :adjustable t
 				      :fill-pointer 0))
@@ -301,21 +301,22 @@
       (dotimes (y h)
 	(dotimes (z w)
 
-	  (let* ((wpos (vec (/ x 10) (/ y 10) (/ z 10)))
-	         (value (+ (* (perlin (v* wpos 0.2) :seed 23) 5)
-			   (* (perlin (v* wpos 0.4) :seed 60) 2)
-			      (perlin     wpos      :seed 92)
-			   (/ (perlin (v* wpos 2)   :seed 61) 2)
-			   (/ (perlin (v* wpos 4)   :seed 50) 4)
-			   (/ (perlin (v* wpos 8)   :seed 13) 8)))
+	  (let* ((seeds '(0 0 0 0 0 0))
+		 (seeds '(1 2 3 4 5 6))
+		 (wpos (vec (/ x 10) (/ y 10) (/ z 10)))
+	         (value (+ (* (perlin (v* wpos 0.2) :seed (nth 0 seeds)) 5)
+			   (* (perlin (v* wpos 0.4) :seed (nth 1 seeds)) 2)
+			      (perlin     wpos      :seed (nth 2 seeds))
+			   (/ (perlin (v* wpos 2)   :seed (nth 3 seeds)) 2)
+			   (/ (perlin (v* wpos 4)   :seed (nth 4 seeds)) 4)
+			   (/ (perlin (v* wpos 8)   :seed (nth 5 seeds)) 8)))
 		 (value (if (< value 0)
 			    (/ value 4)
 			    value))
 		 (value (if (< value -1)
 			    -1.0
 			    value))
-		 (value (+ 4 value))
-		 (color (height-to-color value)))
+		 (color (height-to-color value min max)))
 	    (when t
 	      (vector-push-extend (vx wpos) *perlin-points*)
 	      (vector-push-extend value *perlin-points*)
@@ -361,24 +362,29 @@
 
   )
 
-(defun height-to-color (y)
-  (let ((c (/ y 8)))
-    (vec c c c)))
+(defun height-to-color (y min max)
+  (let* ((diff (- max min))
+	 (dist (- y min))
+	 (y (float (/ dist diff))))
+    (vec y y y)))
 
-(defun height-to-color (y)
-  (cond
-    ((> y 3.4) (vec (/ #xEB #xFF)
-		    (/ #xF1 #xFF)
-		    (/ #xFF #xFF)))
-    ((> y 3.0) (vec (/ #x54 #xFF)
-		    (/ #x50 #xFF)
-		    (/ #x3B #xFF)))
-    ((> y -0.4) (vec (/ #x93 #xFF)
-		    (/ #xC4 #xFF)
-		    (/ #x8B #xFF)))
-    (t (vec (/ #x85 #xFF)
-	    (/ #xC7 #xFF)
-	    (/ #xF2 #xFF)))))
+(defun height-to-color (y min max)
+  (let* ((diff (- max min))
+	 (dist (- y min))
+	 (y (/ dist diff)))
+    (cond
+      ((> y 0.9) (vec (/ #xEB #xFF)
+		      (/ #xF1 #xFF)
+		      (/ #xFF #xFF)))
+      ((> y 0.7) (vec (/ #x54 #xFF)
+		      (/ #x50 #xFF)
+		      (/ #x3B #xFF)))
+      ((> y 0.2) (vec (/ #x93 #xFF)
+		      (/ #xC4 #xFF)
+		      (/ #x8B #xFF)))
+      (t (vec (/ #x85 #xFF)
+	      (/ #xC7 #xFF)
+	      (/ #xF2 #xFF))))))
      
 
 
@@ -483,7 +489,7 @@
     (shader-set-uniform *shader-program-colored* "model" (marr (meye 4))))
 
   (gl:bind-vertex-array *point-cloud-vao*)
-  (gl:draw-elements :triangle-strip
+  (gl:draw-elements :line-strip
 		    (gl:make-null-gl-array :unsigned-int)
 		    :count 44998)
   (gl:bind-vertex-array 0)
@@ -558,7 +564,19 @@
     :initarg :debug-text
     :initform '()
     :accessor graphics-debug-text
-    :documentation "A list of strings to show on screen, from the bottom down")))
+    :documentation "A list of strings to show on screen, from the bottom down")
+   (last-x
+    :initform 0
+    :accessor graphics-last-x
+    :documentation "Last recorded cursor position")
+   (last-y
+    :initform 0
+    :accessor graphics-last-y
+    :documentation "Last recorded cursor position")
+   (mouse-just-entered
+    :initform '()
+    :accessor graphics-mouse-just-entered
+    :documentation "Whether the mouse just entered the window")))
 
 (defmethod graphics-resize ((graphics graphics) window width height)
   (with-slots (v-width v-height) (graphics-bmp-font graphics)
@@ -592,7 +610,7 @@
 		 (let ((fps (if (> frame-time 0)
 				(/ 1 frame-time)
 				-12.0)))
-		   (funcall render-fn frame fps))
+		   (funcall render-fn frame fps :debugp (graphics-debug-p graphics)))
 
 		 (when (graphics-debug-p graphics)
 		   (with-slots (debug-text bmp-font) graphics
@@ -630,6 +648,39 @@
 	    (flet ((is-key (other) (eql other key)))
 	      (setf keys (remove-if #'is-key keys)))))
       (glfw:set-key-callback (quote callback-sym) (graphics-window graphics)))))
+
+(defmethod graphics-set-mouse-enter-callback ((graphics graphics) callback)
+  "callback should receive (window enterp)"
+  (let ((callback-sym (gensym)))
+    (glfw:def-cursor-enter-callback callback-sym (window enterp)
+      (funcall callback window enterp))
+
+    (glfw:set-cursor-enter-callback (quote callback-sym) (graphics-window graphics))))
+
+(defmethod graphics-set-mouse-pos-callback ((graphics graphics) callback)
+  (let ((callback-sym (gensym)))
+    (glfw:def-cursor-pos-callback callback-sym (window x y)
+      (funcall callback window x y))
+
+    (glfw:set-cursor-position-callback (quote callback-sym) (graphics-window graphics))))
+
+(defmethod graphics-setup-fps-camera ((graphics graphics) (camera camera))
+  (flet ((process-mouse (window x-pos y-pos)
+	   (with-slots (last-x last-y mouse-just-entered) graphics
+	     (let ((x-offset (- x-pos last-x))
+		   (y-offset (- last-y y-pos)))
+	       (setf last-x x-pos)
+	       (setf last-y y-pos)
+	       (if mouse-just-entered
+		   (setf mouse-just-entered nil)
+		   (handle-mouse-movement camera x-offset y-offset)))))
+	 (process-mouse-enter (window enterp)
+	   (setf (graphics-mouse-just-entered graphics) t)))
+    (graphics-set-mouse-enter-callback graphics #'process-mouse-enter)
+    (graphics-set-mouse-pos-callback graphics #'process-mouse)))
+
+	 
+	       
     
 (defmacro with-graphics ((graphics title
 			  &key window-width window-height hide-cursor)
@@ -671,9 +722,12 @@
 	 (gl:viewport 0 0 ,window-width ,window-height)
 
 	 (gl:enable :depth-test)
+
+	 (gl:enable :cull-face)
+	 (gl:cull-face :back)
 	 
          ;;; https://community.khronos.org/t/adjust-gl-points-size/67980
-	 (gl:enable :program-point-size)
+	 ;;; (gl:enable :program-point-size)
 
 	 ,@body))))
 	 
