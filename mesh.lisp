@@ -115,13 +115,11 @@
   (with-slots (vao vbo ebo) mesh
     (gl:delete-vertex-arrays (list vao))
     (gl:delete-buffers (list vbo ebo))))
-		      
+
 (defmethod render-mesh ((mesh mesh) &key debugp)
   (with-slots (indices textures vao vbo ebo) mesh
     (gl:bind-vertex-array vao)
-    (gl:draw-elements (if debugp
-			  :lines
-			  :triangles)
+    (gl:draw-elements :triangles
 		      (gl:make-null-gl-array :unsigned-int)
 		      :count (length indices))
     (gl:bind-vertex-array 0)))

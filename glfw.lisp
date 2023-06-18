@@ -58,4 +58,6 @@
        ;;; https://community.khronos.org/t/adjust-gl-points-size/67980
        (gl:enable :program-point-size)
 
+       (gl:enable :primitive-restart)
+
        ,@body)))

@@ -12,6 +12,7 @@
 	       :cl-opengl
 	       :cl-ppcre
 	       :classimp
+	       :infix-math
 	       :pngload
 	       :fiveam)
   :components ((:file "packages")

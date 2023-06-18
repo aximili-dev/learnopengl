@@ -153,19 +153,19 @@
       (flet ((is-key (other) (eql other key)))
 	(setf *keys* (remove-if #'is-key *keys*)))))
 
-;;(defun process-mouse (window x-pos y-pos)
-;;  (let ((x-offset (- x-pos *last-x*))
-;;	(y-offset (- *last-y* y-pos)))
-;;    (setf *last-x* x-pos)
-;;    (setf *last-y* y-pos)
-;;
-;;    (if *mouse-just-entered*
-;;	(setf *mouse-just-entered* nil)
-;;	(handle-mouse-movement *camera* x-offset y-offset))))
+(defun process-mouse (window x-pos y-pos)
+  (let ((x-offset (- x-pos *last-x*))
+	(y-offset (- *last-y* y-pos)))
+    (setf *last-x* x-pos)
+    (setf *last-y* y-pos)
 
-;;(defun process-mouse-enter (window entered)
-;;  (if entered
-;;      (setf *mouse-just-entered* t)))
+    (if *mouse-just-entered*
+	(setf *mouse-just-entered* nil)
+	(handle-mouse-movement *camera* x-offset y-offset))))
+
+(defun process-mouse-enter (window entered)
+  (if entered
+      (setf *mouse-just-entered* t)))
 
 (defparameter *world* nil)
 
@@ -303,6 +303,7 @@
 
 	  (let* ((seeds '(0 0 0 0 0 0))
 		 (seeds '(1 2 3 4 5 6))
+		 (seeds (reverse seeds))
 		 (wpos (vec (/ x 10) (/ y 10) (/ z 10)))
 	         (value (+ (* (perlin (v* wpos 0.2) :seed (nth 0 seeds)) 5)
 			   (* (perlin (v* wpos 0.4) :seed (nth 1 seeds)) 2)
@@ -330,12 +331,7 @@
 	(vector-push-extend (+ (* z w) x) indices)
 	(vector-push-extend (+ (* z w) x w) indices))
 
-      (vector-push-extend (+ (* z w)
-			     w
-			     (- w 1))
-			  indices)
-      (vector-push-extend (* (1+ z) w)
-			  indices))
+      (vector-push-extend #xFFFFFFFF indices))
 
     (print (length indices))
     
@@ -488,10 +484,14 @@
     (shader-set-uniform *shader-program-colored* "projection" (marr proj))
     (shader-set-uniform *shader-program-colored* "model" (marr (meye 4))))
 
+  ;;(gl:polygon-mode :front-and-back :line)
+  (cl-opengl-bindings:primitive-restart-index #xFFFFFFFF)
+
   (gl:bind-vertex-array *point-cloud-vao*)
-  (gl:draw-elements :line-strip
+  (gl:draw-elements :triangle-strip
 		    (gl:make-null-gl-array :unsigned-int)
-		    :count 44998)
+		    :count 44849)
+  (gl:polygon-mode :front-and-back :fill)
   (gl:bind-vertex-array 0)
   
   )

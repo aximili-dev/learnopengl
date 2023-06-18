@@ -25,6 +25,7 @@
    :common-lisp
    :3d-vectors
    :3d-matrices
+   :infix-math
    :org.shirakumo.flare.quaternion
    :org.shirakumo.flare.transform
    :fiveam

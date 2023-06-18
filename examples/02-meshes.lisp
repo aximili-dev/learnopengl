@@ -24,7 +24,7 @@
 	   (d20-entity (make-instance 'entity
 				      :model d20-model
 				      :shader model-shader
-				      :transform (transform (vec 4 1 4)
+				      :transform (transform (vec 0 0 0)
 							    (vec 3 3 3))))
 	   (light-positions (list (vec  0.7  0.2  2.0)
 				  (vec  2.3 -3.3 -4.0)
@@ -55,11 +55,30 @@
 		       (set-light-prop i "specular" 1.0 1.0 1.0))
 		     (incf i))))
 
+	       (if debugp
+		   (gl:polygon-mode :front-and-back :line)
+		   (gl:polygon-mode :front-and-back :fill))
+
 	       (render-entity d20-entity
 			      (graphics-v-width graphics)
 			      (graphics-v-height graphics)
 			      camera
 			      :debugp debugp)
+
+	       (dotimes (i 12)
+		 (let* ((angle (* i (/ 360 12)))
+			(angle (* angle (/ pi 180)))
+			(pos (vrot (vec 0 0 6) +vy+ angle)))
+		   (with-slots (transform) cube-entity
+		     (setf transform (transform pos
+						(vec 1 1 1)
+						(qfrom-angle +vy+ angle)))
+
+		     (render-entity cube-entity
+				    (graphics-v-width graphics)
+				    (graphics-v-height graphics)
+				    camera
+				    :debugp debugp))))
 
 	       (push (format nil "FPS: ~3,3f" fps) (graphics-debug-text graphics))))
 	(graphics-run graphics #'render #'tick)))))
