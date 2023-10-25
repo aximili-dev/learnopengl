@@ -18,3 +18,13 @@
    :wavefront)
   (:export
    :run-example))
+
+(defpackage :example-04-marching-cubes
+  (:use
+   :common-lisp
+   :game-engine
+   :perlin
+   :infix-math
+   :3d-vectors)
+  (:export
+   :run-example))

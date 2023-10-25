@@ -301,7 +301,7 @@
       (dotimes (y h)
 	(dotimes (z w)
 
-	  (let* ((seeds '(0 0 0 0 0 0))
+	  (let* (;;(seeds '(0 0 0 0 0 0))
 		 (seeds '(1 2 3 4 5 6))
 		 (seeds (reverse seeds))
 		 (wpos (vec (/ x 10) (/ y 10) (/ z 10)))
@@ -364,7 +364,7 @@
 	 (y (float (/ dist diff))))
     (vec y y y)))
 
-(defun height-to-color (y min max)
+(defun height-to-color-2 (y min max)
   (let* ((diff (- max min))
 	 (dist (- y min))
 	 (y (/ dist diff)))

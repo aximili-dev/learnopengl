@@ -36,11 +36,13 @@
 
 (asdf:defsystem :game-engine/examples
   :description "Graphics Engine Examples"
-  :depends-on (:game-engine)
+  :depends-on (:game-engine
+	       :infix-math)
   :components ((:module "examples"
 		:components ((:file "packages")
 			     (:file "01-triangle")
 			     (:file "02-meshes")))))
+			     ;;(:file "04-marching")))))
 
 #+sb-core-compression
 (defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
